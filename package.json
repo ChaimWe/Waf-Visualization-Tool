@@ -1,0 +1,33 @@
+{
+  "name": "waf-visualization-tool",
+  "version": "1.0.0",
+  "description": "AWS WAF Rules Visualization Tool",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "npm --workspace frontend-mui/frontend-mui run dev",
+    "dev:backend": "npm --workspace backend start"
+  },
+  "workspaces": [
+    "backend",
+    "frontend-mui/frontend-mui"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {},
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChaimWe/AppsFlyerProject.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ChaimWe/AppsFlyerProject/issues"
+  },
+  "homepage": "https://github.com/ChaimWe/AppsFlyerProject#readme"
+}
