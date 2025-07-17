@@ -2,29 +2,18 @@ import React, { useState, useEffect, useCallback, forwardRef, useMemo } from 're
 import ReactFlow, {
     Controls,
     useReactFlow,
-    Background,
     ReactFlowProvider,
-    MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import CustomNode from './CustomNode';
 import { useThemeContext } from '../../context/ThemeContext';
-import { IconButton, Tooltip, ToggleButton, ToggleButtonGroup } from '@mui/material';
-import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
-import LockIcon from '@mui/icons-material/Lock';
-import LockOpenIcon from '@mui/icons-material/LockOpen';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import CustomPolylineEdge from './CustomPolylineEdge';
-import { Box } from '@mui/material';
+import { Box, IconButton, Tooltip, Button, Typography } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-import { Button } from '@mui/material';
-import { Typography } from '@mui/material';
+import ClickAwayListener from '@mui/material/ClickAwayListener';
 
 // Move nodeTypes and edgeTypes outside the component to avoid React Flow warning
 const nodeTypes = { 'custom-node': CustomNode };
@@ -128,6 +117,7 @@ const FlowChartInner = forwardRef(({
     showArrows,
     nodesPerRow,
     orderBy,
+    albMode, // Added albMode prop
 }, ref) => {
     const [hoveredNode, setHoveredNode] = useState(null);
     const [showHelp, setShowHelp] = useState(false);
@@ -200,17 +190,8 @@ const FlowChartInner = forwardRef(({
     const filteredEdges = useMemo(() => {
         const nodeIds = new Set(preprocessedNodes.map(n => n.id));
         const valid = (allEdges || []).filter(e => e.source && e.target && nodeIds.has(e.source) && nodeIds.has(e.target));
-        // Fallback: if no edges but multiple nodes, generate fallback edges
-        if (valid.length === 0 && preprocessedNodes.length > 1) {
-            const fallback = preprocessedNodes.slice(1).map((node, i) => ({
-                id: `edge-fallback-${i}`,
-                source: preprocessedNodes[i].id,
-                target: node.id,
-                type: 'custom',
-            }));
-            return fallback;
-        }
-        // Ensure all edges have type 'custom'
+        // Remove fallback: do not generate artificial edges if there are no real edges
+        // Only return real edges
         return valid.map(e => ({ ...e, type: 'custom' }));
     }, [allEdges, preprocessedNodes]);
 
@@ -386,72 +367,8 @@ const FlowChartInner = forwardRef(({
         // No-op for now
     }, []);
 
-    // Layout logic for nodes
-    // const layoutNodes = useCallback((nodes, edges, orderBy, nodesPerRow) => { // This line is removed as per the edit hint
-    //     if (orderBy === 'number') { // This line is removed as per the edit hint
-    //         // Grid layout for number sort // This line is removed as per the edit hint
-    //         const GRID_SIZE = 180; // This line is removed as per the edit hint
-    //         return nodes.map((node, index) => { // This line is removed as per the edit hint
-    //             const row = Math.floor(index / nodesPerRow); // This line is removed as per the edit hint
-    //             const col = index % nodesPerRow; // This line is removed as per the edit hint
-    //             return { // This line is removed as per the edit hint
-    //                 ...node, // This line is removed as per the edit hint
-    //                 position: { x: col * GRID_SIZE, y: row * GRID_SIZE }, // This line is removed as per the edit hint
-    //             }; // This line is removed as per the edit hint
-    //         }); // This line is removed as per the edit hint
-    //     } else if (orderBy === 'dependency') { // This line is removed as per the edit hint
-    //         // Group nodes by color/type for dependency sort // This line is removed as per the edit hint
-    //         const colorGroups = { // This line is removed as per the edit hint
-    //             gray: [], // This line is removed as per the edit hint
-    //             blue: [], // This line is removed as per the edit hint
-    //             green: [], // This line is removed as per the edit hint
-    //         }; // This line is removed as per the edit hint
-    //         nodes.forEach(n => { // This line is removed as per the edit hint
-    //             const color = (n.data.color || '').toLowerCase(); // This line is removed as per the edit hint
-    //             if (color === 'blue') colorGroups.blue.push(n); // This line is removed as per the edit hint
-    //             else if (color === 'green') colorGroups.green.push(n); // This line is removed as per the edit hint
-    //             else colorGroups.gray.push(n); // This line is removed as per the edit hint
-    //         }); // This line is removed as per the edit hint
-    //         const GRID_SIZE = 180; // This line is removed as per the edit hint
-    //         const groupOrder = ['gray', 'blue', 'green']; // This line is removed as per the edit hint
-    //         let positioned = []; // This line is removed as per the edit hint
-    //         let y = 0; // This line is removed as per the edit hint
-    //         groupOrder.forEach(group => { // This line is removed as per the edit hint
-    //             const groupNodes = colorGroups[group]; // This line is removed as per the edit hint
-    //             groupNodes.forEach((node, i) => { // This line is removed as per the edit hint
-    //                 positioned.push({ // This line is removed as per the edit hint
-    //                     ...node, // This line is removed as per the edit hint
-    //                     position: { x: i * GRID_SIZE, y }, // This line is removed as per the edit hint
-    //                 }); // This line is removed as per the edit hint
-    //             }); // This line is removed as per the edit hint
-    //             if (groupNodes.length > 0) y += GRID_SIZE; // This line is removed as per the edit hint
-    //         }); // This line is removed as per the edit hint
-    //         return positioned; // This line is removed as per the edit hint
-    //     } else { // This line is removed as per the edit hint
-    //         // Default to grid // This line is removed as per the edit hint
-    //         const GRID_SIZE = 180; // This line is removed as per the edit hint
-    //         return nodes.map((node, index) => { // This line is removed as per the edit hint
-    //             const row = Math.floor(index / nodesPerRow); // This line is removed as per the edit hint
-    //             const col = index % nodesPerRow; // This line is removed as per the edit hint
-    //             return { // This line is removed as per the edit hint
-    //                 ...node, // This line is removed as per the edit hint
-    //                 position: { x: col * GRID_SIZE, y: row * GRID_SIZE }, // This line is removed as per the edit hint
-    //             }; // This line is removed as per the edit hint
-    //         }); // This line is removed as per the edit hint
-    //     } // This line is removed as per the edit hint
-    // }, []); // This line is removed as per the edit hint
-
     // Use layoutNodes to position nodes
-    // const positionedNodes = useMemo(() => layoutNodes(sortedNodes, edges, orderBy, nodesPerRow), [sortedNodes, edges, orderBy, nodesPerRow]); // This line is removed as per the edit hint
-
-    const popupLayeredNodes = useMemo(() => {
-        // This function is no longer needed as 'orderBy' is removed
-        // It will return null or an empty array if 'orderBy' is removed
-        return null;
-    }, []);
-
-    const nodesWithOffset = useMemo(() => {
-        if (popupLayeredNodes) return popupLayeredNodes;
+    const positionedNodesWithOffset = useMemo(() => {
         const posMap = new Map();
         return positionedNodes.map(n => {
             let x = safeNumber(n.position?.x);
@@ -475,7 +392,7 @@ const FlowChartInner = forwardRef(({
                 };
             }
         });
-    }, [positionedNodes, popupLayeredNodes]);
+    }, [positionedNodes]);
 
     // Compute highlight/fade sets and fade strength
     const highlightSet = useMemo(() => {
@@ -494,45 +411,8 @@ const FlowChartInner = forwardRef(({
     const nodeFade = fadeStrength === 'strong' ? 0.1 : fadeStrength === 'mild' ? 0.4 : 1;
     const edgeFade = fadeStrength === 'strong' ? 0.01 : fadeStrength === 'mild' ? 0.15 : 0.5;
 
-    // Node style: circular, colored, centered text
-    // const nodesWithStyles = positionedNodes.map(node => {
-    //     // Assign color for sorting
-    //     let color = (node.data.color || '').toLowerCase();
-    //     let bgColor = '#bdbdbd'; // gray default
-    //     if (color === 'blue') bgColor = '#1976d2';
-    //     else if (color === 'green') bgColor = '#43a047';
-    //     // Style for circular node
-    //     const style = {
-    //         width: 56,
-    //         height: 56,
-    //         borderRadius: '50%',
-    //         background: bgColor,
-    //         color: '#fff',
-    //         display: 'flex',
-    //         alignItems: 'center',
-    //         justifyContent: 'center',
-    //         fontWeight: 600,
-    //         fontSize: 14,
-    //         boxShadow: node.selected ? '0 0 0 4px #ffd600' : '0 2px 8px rgba(0,0,0,0.08)',
-    //         border: node.selected ? '3px solid #ffd600' : '2px solid #fff',
-    //         transition: 'box-shadow 0.2s, border 0.2s',
-    //     };
-    //     return {
-    //         ...node,
-    //         style,
-    //     };
-    // });
-    // Edge style: smooth, light gray, no arrowheads
-    // const edgesWithStyles = filteredEdges.map(edge => {
-    //     // Remove sourceHandle/targetHandle/type if present
-    //     const { sourceHandle, targetHandle, type, ...rest } = edge;
-    //     return {
-    //         ...rest,
-    //         style: { stroke: '#bbb', strokeWidth: 2, opacity: 0.6 },
-    //         markerEnd: undefined,
-    //     };
-    // });
 
+    // --- Export handlers ---
     const handleExportPdf = useCallback((afterExportCallback) => {
         const flowElement = document.querySelector('.react-flow');
         if (!flowElement) {
@@ -568,45 +448,15 @@ const FlowChartInner = forwardRef(({
         }, 100);
     }, []);
 
-    const handleExportImage = useCallback((afterExportCallback) => {
-        const flowElement = document.querySelector('.react-flow');
-        if (!flowElement) {
-            if (afterExportCallback) afterExportCallback();
-            return;
-        }
-        setTimeout(() => {
-            const rect = flowElement.getBoundingClientRect();
-            html2canvas(flowElement, {
-                backgroundColor: darkTheme ? '#1a1a1a' : '#ffffff',
-                useCORS: true,
-                scale: 2,
-                width: Math.round(rect.width),
-                height: Math.round(rect.height),
-                scrollX: -window.scrollX,
-                scrollY: -window.scrollY,
-                onclone: (clonedDoc) => {},
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'waf-rules-flowchart.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                if (afterExportCallback) afterExportCallback();
-            }).catch(err => {
-                if (afterExportCallback) afterExportCallback();
-            });
-        }, 100);
-    }, [darkTheme]);
-
     React.useImperativeHandle(ref, () => ({
         handleExportPdf,
-        handleExportImage,
     }));
 
     const flowStyles = useMemo(() => ({
         backgroundColor: 'transparent',
     }), []);
 
-    if (!sortedNodes?.length || nodesWithOffset.length === 0) {
+    if ((!sortedNodes || sortedNodes.length === 0) && (!positionedNodesWithOffset || positionedNodesWithOffset.length === 0)) {
         return <div style={{ color: '#aaa', padding: 20 }}>No nodes to display. Please load or add rules to see the flowchart.</div>;
     }
 
@@ -621,19 +471,9 @@ const FlowChartInner = forwardRef(({
         pdf.save('tree-view-export.pdf');
     };
 
-    // Determine which nodes/edges are highlighted/faded
-    // const highlightSet = new Set(); // This line is removed as per the edit hint
-    // if (hoveredNode || selectedNode) {
-    //     const focusId = hoveredNode || selectedNode;
-    //     highlightSet.add(focusId);
-    //     edges.forEach(edge => {
-    //         if (edge.source === focusId) highlightSet.add(edge.target);
-    //         if (edge.target === focusId) highlightSet.add(edge.source);
-    //     });
-    // }
 
     // Pass isFaded and highlighted to nodes/edges
-    const nodesWithStyles = nodesWithOffset.map(node => {
+    const nodesWithStyles = positionedNodesWithOffset.map(node => {
       let opacity = 1;
       if (highlightSet) {
         opacity = highlightSet.has(node.id) ? 1 : nodeFade;
@@ -697,39 +537,50 @@ const FlowChartInner = forwardRef(({
             </Box>
             {/* Legend/Help Dialog */}
             {showHelp && (
-                <Box sx={{
-                    position: 'fixed',
-                    top: 80,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    zIndex: 2002,
-                    bgcolor: 'background.paper',
-                    borderRadius: 2,
-                    boxShadow: 6,
-                    p: 3,
-                    minWidth: 320,
-                    maxWidth: 480,
-                }}>
-                    <Typography variant="h6" sx={{ mb: 1 }}>How to Read This View</Typography>
-                    <Typography variant="body2" sx={{ mb: 2 }}>
-                        <b>Node Colors:</b><br/>
-                        <span style={{ color: '#888' }}>Gray</span>: ACL<br/>
-                        <span style={{ color: '#43a047' }}>Green</span>: ALB<br/>
-                        <span style={{ color: '#1976d2' }}>Blue</span>: WAF<br/>
-                        <br/>
-                        <b>Edge Styles:</b><br/>
-                        <span style="border-bottom: 2px solid #1976d2;">Solid</span>: Direct/structural<br/>
-                        <span style="border-bottom: 2px dashed #1976d2;">Dashed</span>: Allow<br/>
-                        <span style="border-bottom: 2px dotted #f44336;">Dotted Red</span>: Deny/Block<br/>
-                        <span style="border-bottom: 2px dashed #ff9800;">Dashed Orange</span>: Redirect<br/>
-                        <span style="border-bottom: 2px dotted #4caf50;">Dotted Green</span>: Shared IP/Port<br/>
-                        <span style="border-bottom: 2px dashed #9c27b0;">Dashed Purple</span>: Fixed Response<br/>
-                        <br/>
-                        <b>Flow:</b> ACL → WAF → ALB<br/>
-                        Click any node to see details and relationships in the inspector.<br/>
-                    </Typography>
-                    <Button variant="contained" onClick={() => setShowHelp(false)} sx={{ mt: 2 }}>Close</Button>
-                </Box>
+                <ClickAwayListener onClickAway={() => setShowHelp(false)}>
+                    <Box sx={{
+                        position: 'fixed',
+                        top: 80,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        zIndex: 2002,
+                        bgcolor: 'background.paper',
+                        borderRadius: 2,
+                        boxShadow: 6,
+                        p: 3,
+                        minWidth: 320,
+                        maxWidth: 480,
+                    }}>
+                        <Typography variant="h6" sx={{ mb: 1 }}>How to Read This View</Typography>
+                        <Typography variant="body2" sx={{ mb: 2 }}>
+                          {/* ALB WAF legend (shown only if albMode is true) */}
+                          {albMode || (Array.isArray(allNodes) && allNodes.some(n => n.style && n.style.background === '#81c784')) ? (
+                            <>
+                              <b>ALB WAF Node Colors:</b><br/>
+                              <span style={{ background: '#81c784', border: '2px solid #388e3c', padding: '2px 8px', borderRadius: 4, marginRight: 6 }}>Light Green</span>: ALB WAF Rule<br/>
+                              <span style={{ background: '#a5d6a7', color: '#388e3c', fontStyle: 'italic', padding: '2px 8px', borderRadius: 4, marginRight: 6 }}>Pale Green Italic</span>: Condition/Field Match<br/>
+                              <span style={{ border: '2px solid #e53935', background: '#fff', color: '#e53935', padding: '2px 8px', borderRadius: 4, marginRight: 6 }}>Red Border</span>: Block Action<br/>
+                              <span style={{ background: '#fff9c4', color: '#888', padding: '2px 8px', borderRadius: 4, marginRight: 6 }}>Light Yellow</span>: Allow/Count Action<br/>
+                              <span style={{ color: '#43a047', fontWeight: 600 }}>Green Edge</span>: ALB Logic<br/>
+                              <span style={{ color: '#ffa726', fontWeight: 600 }}>Orange Edge</span>: Cross-layer (future)<br/>
+                              <br/>
+                              Click any node to see details and relationships in the inspector.<br/>
+                            </>
+                          ) : (
+                            <>
+                              <b>Node Colors:</b><br/>
+                              <span style={{ color: '#1976d2', fontWeight: 600 }}>Blue</span>: ACL rules (label logic)<br/>
+                              <span style={{ color: '#d32f2f', fontWeight: 600 }}>Red</span>: Blocked action nodes/edges<br/>
+                              <span style={{ color: '#e75480', fontWeight: 600, border: '2px solid #e75480', padding: '0 4px', borderRadius: 3 }}>Pink border</span>: Label-emitting rules<br/>
+                              <br/>
+                              <b>Edges:</b> Show label-based dependencies between rules.<br/>
+                              Click any node to see details and relationships in the inspector.<br/>
+                            </>
+                          )}
+                        </Typography>
+                        <Button variant="contained" onClick={() => setShowHelp(false)} sx={{ mt: 2 }}>Close</Button>
+                    </Box>
+                </ClickAwayListener>
             )}
             {/* User tip for navigation */}
             <Box sx={{ position: 'absolute', bottom: 12, left: 16, zIndex: 10, bgcolor: 'rgba(255,255,255,0.85)', borderRadius: 1, px: 2, py: 0.5, fontSize: 13, color: '#333', boxShadow: 1 }}>

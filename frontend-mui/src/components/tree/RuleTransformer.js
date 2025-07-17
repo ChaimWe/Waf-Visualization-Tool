@@ -60,9 +60,9 @@ export default class RuleTransformer {
       }
     });
 
-    /*if (rule.Name !== rule.VisibilityConfig.MetricName) {
+    if (rule.Name !== rule.VisibilityConfig.MetricName) {
       this.warnings.push(`Name and MetricName do not match`);
-    }*/
+    }
   }
 
   labelStatement(statement, rules, currentIndex) {
@@ -70,9 +70,9 @@ export default class RuleTransformer {
 
     if (statement.LabelMatchStatement) {
       return [[
-        '',  // אין תנאי לוגי
-        statement.LabelMatchStatement.Key,  // שם הלייבל
-        this.findParentDependencies(rules, statement.LabelMatchStatement.Key, currentIndex)  // מערך של שמות חוקים
+        '',  
+        statement.LabelMatchStatement.Key,  
+        this.findParentDependencies(rules, statement.LabelMatchStatement.Key, currentIndex) 
       ]];
     }
 

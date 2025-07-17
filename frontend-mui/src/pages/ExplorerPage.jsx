@@ -6,6 +6,8 @@ import FlowChart from '../components/tree/FlowChart';
 import RuleDetailsSidebar from '../components/WAFView/RuleDetailsSidebar';
 import InspectorView from '../components/WAFView/InspectorView';
 import RuleTransformer from '../components/tree/RuleTransformer';
+import AlbRuleTransformer from '../components/tree/AlbRuleTransformer';
+import WafInterlinkedTransformer from '../components/tree/WafInterlinkedTransformer';
 import BugReportIcon from '@mui/icons-material/BugReport';
 
 export default function ExplorerPage() {
@@ -47,7 +49,7 @@ export default function ExplorerPage() {
 
   const { aclData, albData, setAclData, setAlbData, clearAclData, clearAlbData } = useDataSource();
   const [selectedNode, setSelectedNode] = useState(null);
-  const [ruleSet, setRuleSet] = useState('acl'); // 'acl' or 'alb'
+  const [ruleSet, setRuleSet] = useState('acl'); // 'acl', 'alb', or 'waf'
   const [nodesPerRow, setNodesPerRow] = useState(8);
   const [orderBy, setOrderBy] = useState('dependency');
 
@@ -55,66 +57,44 @@ export default function ExplorerPage() {
   const rules = useMemo(() => {
     if (ruleSet === 'acl') return aclData?.Rules || [];
     if (ruleSet === 'alb') return albData?.Rules || [];
+    if (ruleSet === 'waf') return []; // handled separately
     return [];
   }, [ruleSet, aclData, albData]);
 
   // Use RuleTransformer to process rules into nodes/edges
   const transformed = useMemo(() => {
+    if (ruleSet === 'waf') {
+      const aclRules = aclData?.Rules || [];
+      const albRules = albData?.Rules || [];
+      const transformer = new WafInterlinkedTransformer(aclRules, albRules);
+      return transformer.transformRules() || { nodes: [], edges: [] };
+    }
     if (!rules.length) return { nodes: [], edges: [] };
     if (ruleSet === 'acl') {
       const transformer = new RuleTransformer(rules);
       return transformer.transformRules() || { nodes: [], edges: [] };
-    } else if (ruleSet === 'alb') {
-      // Minimal ALB node transformation: treat each ALB rule as a node
-      const nodes = rules.map((rule, idx) => ({
-        id: rule.Name || rule.name || rule.Id || String(idx),
-        type: 'custom-node',
-        data: {
-          ...rule,
-          name: rule.Name || rule.name || rule.Id || `ALB Rule ${idx + 1}`,
-          priority: rule.Priority || rule.priority || idx + 1,
-          action: rule.Actions ? (rule.Actions[0]?.Type || 'Unknown') : (rule.action || ''),
-          borderColor: 'orange', // Add this for ALB nodes
-        },
-      }));
-      // --- Dependency Edges ---
-      const edges = [];
-      // Priority order: edge from lower-numbered (higher priority) to higher-numbered
-      for (let i = 0; i < rules.length; ++i) {
-        const ruleA = rules[i];
-        const idA = ruleA.Name || ruleA.name || ruleA.Id || String(i);
-        const prioA = ruleA.Priority || ruleA.priority || i + 1;
-        // Shared resources: target groups
-        const tgA = (ruleA.TargetGroupArns || ruleA.targetGroups || []).map(tg => tg.TargetGroupArn || tg.Name || tg.Id || tg);
-        for (let j = 0; j < rules.length; ++j) {
-          if (i === j) continue;
-          const ruleB = rules[j];
-          const idB = ruleB.Name || ruleB.name || ruleB.Id || String(j);
-          const prioB = ruleB.Priority || ruleB.priority || j + 1;
-          // Priority: if A is higher priority (lower number) and B is lower
-          if (prioA < prioB) {
-            edges.push({ id: `edge-priority-${idA}-${idB}`, source: idA, target: idB, type: 'custom', label: 'priority' });
-          }
-          // Shared target group
-          const tgB = (ruleB.TargetGroupArns || ruleB.targetGroups || []).map(tg => tg.TargetGroupArn || tg.Name || tg.Id || tg);
-          if (tgA.length && tgB.length && tgA.some(tg => tgB.includes(tg))) {
-            edges.push({ id: `edge-tg-${idA}-${idB}`, source: idA, target: idB, type: 'custom', label: 'shared target' });
-          }
-          // Sequential: if priorities are consecutive
-          if (prioA + 1 === prioB) {
-            edges.push({ id: `edge-seq-${idA}-${idB}`, source: idA, target: idB, type: 'custom', label: 'sequential' });
-          }
-        }
-      }
-      return { nodes, edges };
+    }
+    if (ruleSet === 'alb') {
+      const transformer = new AlbRuleTransformer(rules);
+      return transformer.transformRules() || { nodes: [], edges: [] };
     }
     return { nodes: [], edges: [] };
-  }, [rules, ruleSet]);
+  }, [rules, ruleSet, aclData, albData]);
 
   // Handler for node selection in tree mode
   const handleNodeSelect = (nodeId) => {
-    const found = rules.find(r => (r.Name || r.name) === nodeId);
-    setSelectedNode(found || null);
+    if (ruleSet === 'waf') {
+      const aclRules = aclData?.Rules || [];
+      const albRules = albData?.Rules || [];
+      const allRules = [...aclRules, ...albRules];
+      // Node IDs are prefixed with 'acl-' or 'alb-'
+      const cleanId = nodeId.replace(/^acl-/, '').replace(/^alb-/, '');
+      const found = allRules.find(r => (r.Name || r.name || r.Id || r.id) === cleanId);
+      setSelectedNode(found || null);
+    } else {
+      const found = rules.find(r => (r.Name || r.name) === nodeId);
+      setSelectedNode(found || null);
+    }
   };
 
   // Handler to close inspector drawer
@@ -178,11 +158,11 @@ export default function ExplorerPage() {
             value={ruleSet}
             exclusive
             onChange={(_, v) => v && setRuleSet(v)}
-            size="small"
-            sx={{ mr: 2 }}
+            sx={{ mb: 2 }}
           >
             <ToggleButton value="acl">ACL</ToggleButton>
             <ToggleButton value="alb">ALB</ToggleButton>
+            <ToggleButton value="waf">WAF</ToggleButton>
           </ToggleButtonGroup>
           <ToggleButtonGroup
             value={viewMode}
@@ -237,7 +217,7 @@ export default function ExplorerPage() {
           width: '100%',
         }}>
           {/* Empty State for First-Time Users */}
-          {rules.length === 0 ? (
+          {transformed.nodes.length === 0 ? (
             <Box sx={{
               height: '100%',
               display: 'flex',
@@ -293,14 +273,17 @@ export default function ExplorerPage() {
             <FlowChart
               allNodes={transformed.nodes}
               allEdges={transformed.edges}
-              selectedNode={selectedNode ? (selectedNode.Name || selectedNode.name) : null}
+              selectedNode={selectedNode ? (selectedNode.Name || selectedNode.name || selectedNode.Id || selectedNode.id) : null}
               setSelectedNode={handleNodeSelect}
               nodesPerRow={nodesPerRow}
               orderBy={orderBy}
             />
           ) : (
             <Box sx={{ width: '100%', height: '100%', flex: 1, minHeight: 0, minWidth: 0, overflow: 'auto' }}>
-              <InspectorView rules={rules} showSubgraph={true} />
+              <InspectorView
+                rules={ruleSet === 'waf' ? [...(aclData?.Rules || []), ...(albData?.Rules || [])] : rules}
+                showSubgraph={true}
+              />
             </Box>
           )}
         </Box>
@@ -349,7 +332,11 @@ export default function ExplorerPage() {
           onMouseDown={handleMouseDown}
         />
         {selectedNode && (
-          <RuleDetailsSidebar rule={selectedNode} rules={rules} onClose={handleCloseInspector} />
+          <RuleDetailsSidebar
+            rule={selectedNode}
+            rules={ruleSet === 'waf' ? [...(aclData?.Rules || []), ...(albData?.Rules || [])] : rules}
+            onClose={handleCloseInspector}
+          />
         )}
       </Drawer>
     </Box>

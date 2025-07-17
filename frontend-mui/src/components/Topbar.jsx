@@ -13,7 +13,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import MenuIcon from '@mui/icons-material/Menu';
 import Typography from '@mui/material/Typography';
 import { useNavigate } from 'react-router-dom';
-import logo from '../assets/1002079229-removebg-preview.png';
+import logo from '../assets/Lightmode-logo.png';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
@@ -63,27 +63,14 @@ export default function Topbar({ title = 'WAF Visualization Tool', aclData, albD
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = (event) => {
       try {
-        const jsonData = JSON.parse(e.target.result);
-        if (!jsonData || !Array.isArray(jsonData.Rules)) {
-          showAlert(`Uploaded file must have a top-level 'Rules' array.`, 'error');
-          console.error('Invalid file structure:', jsonData);
-          // Reset input value so user can re-upload
-          if (type === 'acl' && aclInputRef.current) aclInputRef.current.value = '';
-          if (type === 'alb' && albInputRef.current) albInputRef.current.value = '';
-          return;
-        }
-        handleUpload(type, jsonData, file.name);
-        showAlert(`${type === 'acl' ? 'WAF' : 'ALB'} file uploaded successfully!`, 'success');
-        console.log(`${type === 'acl' ? 'WAF' : 'ALB'} file uploaded:`, jsonData);
-      } catch (error) {
-        showAlert(`Error reading JSON file for ${type.toUpperCase()}: ${error.message}`, 'error');
-        console.error('JSON parse error:', error);
+        const data = JSON.parse(event.target.result);
+        handleUpload(type, data, file.name);
+        showAlert(`${type === 'acl' ? 'WAF' : 'ALB'} file loaded!`, 'success');
+      } catch (err) {
+        showAlert('Invalid JSON file.', 'error');
       }
-      // Always reset input value after upload
-      if (type === 'acl' && aclInputRef.current) aclInputRef.current.value = '';
-      if (type === 'alb' && albInputRef.current) albInputRef.current.value = '';
     };
     reader.readAsText(file);
   };

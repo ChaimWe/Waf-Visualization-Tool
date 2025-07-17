@@ -12,7 +12,73 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 
-const getNodeStyle = (action, diameter, isParent, isChild, darkTheme, isFaded, nodeType) => {
+const getNodeStyle = (action, diameter, isParent, isChild, darkTheme, isFaded, nodeType, viewType) => {
+    // Interlinked (WAF) view color coding
+    if (viewType === 'waf' || nodeType === 'acl' || nodeType === 'cdn-waf' || nodeType === 'alb' || nodeType === 'alb-waf') {
+        if (action === 'Block') {
+            return {
+                width: diameter,
+                height: diameter,
+                borderRadius: '50%',
+                background: '#d32f2f',
+                border: '3px solid #b71c1c',
+                color: '#fff',
+                fontWeight: 'bold',
+                boxShadow: darkTheme ? '0 4px 6px rgba(0, 0, 0, 0.4)' : '0 4px 6px rgba(56, 57, 59, 0.3)',
+                opacity: isFaded ? 0.3 : 1,
+                outline: 'none',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                padding: 0,
+                transition: 'all 0.3s ease',
+            };
+        }
+        if (nodeType === 'acl' || nodeType === 'cdn-waf') {
+            return {
+                width: diameter,
+                height: diameter,
+                borderRadius: '50%',
+                background: '#1976d2',
+                border: '3px solid #1565c0',
+                color: '#fff',
+                fontWeight: 'bold',
+                boxShadow: darkTheme ? '0 4px 6px rgba(0, 0, 0, 0.4)' : '0 4px 6px rgba(56, 57, 59, 0.3)',
+                opacity: isFaded ? 0.3 : 1,
+                outline: 'none',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                padding: 0,
+                transition: 'all 0.3s ease',
+            };
+        }
+        if (nodeType === 'alb' || nodeType === 'alb-waf') {
+            return {
+                width: diameter,
+                height: diameter,
+                borderRadius: '50%',
+                background: '#43a047',
+                border: '3px solid #2e7d32',
+                color: '#fff',
+                fontWeight: 'bold',
+                boxShadow: darkTheme ? '0 4px 6px rgba(0, 0, 0, 0.4)' : '0 4px 6px rgba(56, 57, 59, 0.3)',
+                opacity: isFaded ? 0.3 : 1,
+                outline: 'none',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                padding: 0,
+                transition: 'all 0.3s ease',
+            };
+        }
+    }
     const nodeStyle = {
         width: diameter,
         height: diameter,
@@ -72,7 +138,7 @@ export default function CustomNode({ data, id, selected, isFaded }) {
       target: `${id}-target`,
     };
 
-    const nodeStyle = getNodeStyle(data.action, diameter, isParent, isChild, darkTheme, isFaded, data.nodeType);
+    const nodeStyle = getNodeStyle(data.action, diameter, isParent, isChild, darkTheme, isFaded, data.nodeType, data.viewType);
     if (selected) {
         nodeStyle.boxShadow = darkTheme 
             ? '0 0 0 2px #fff, 0 4px 6px rgba(0, 0, 0, 0.4)' 
@@ -110,6 +176,7 @@ export default function CustomNode({ data, id, selected, isFaded }) {
             <Tooltip title={iconTooltip} arrow>
                 <span>{icon}</span>
             </Tooltip>
+            {/* When rendering label/header names inside nodes, use the color and bold style as described above. */}
             <Tooltip title={data.Name || data.name} arrow>
                 <div style={{ fontWeight: 'bold', fontSize: 18, textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', color: '#fff', textShadow: darkTheme ? '0 1px 2px rgba(0,0,0,0.5)' : 'none', marginTop: 4 }}>{data.Name || data.name}</div>
             </Tooltip>

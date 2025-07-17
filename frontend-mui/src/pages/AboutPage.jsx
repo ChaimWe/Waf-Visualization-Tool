@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, Paper, useTheme, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
-import logo from '../assets/1002079229-removebg-preview.png';
+import logo from '../assets/Lightmode-logo.png';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 export default function AboutPage() {

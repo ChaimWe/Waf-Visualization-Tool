@@ -23,10 +23,16 @@ const CustomPolylineEdge = ({
     targetPosition,
   });
 
+  // Set edge color for WAF interlinked view
+  let edgeColor = '#ff9800';
+  if (data?.targetAction === 'Block') {
+    edgeColor = '#d32f2f';
+  }
+
   return (
     <>
       {/* Edge path with dynamic style (dashed, color, etc.) */}
-      <BaseEdge path={edgePath} markerEnd={markerEnd} style={style} />
+      <BaseEdge path={edgePath} markerEnd={markerEnd} style={{ ...style, stroke: edgeColor, strokeWidth: 3 }} />
       {/* EdgeLabelRenderer removed: no labels shown */}
     </>
   );

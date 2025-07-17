@@ -21,13 +21,13 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ChaimWe/AppsFlyerProject.git"
+    "url": "git+https://github.com/ChaimWe/waf-visualization-tool.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ChaimWe/AppsFlyerProject/issues"
+    "url": "https://github.com/ChaimWe/waf-visualization-tool/issues"
   },
-  "homepage": "https://github.com/ChaimWe/AppsFlyerProject#readme"
+  "homepage": "https://github.com/ChaimWe/waf-visualization-tool#readme"
 }

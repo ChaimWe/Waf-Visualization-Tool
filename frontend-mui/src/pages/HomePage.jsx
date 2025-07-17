@@ -5,7 +5,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
-import logo from '../assets/1002079229-removebg-preview.png';
+import logo from '../assets/Lightmode-logo.png';
 import AWSLoginDialog from '../components/AWSLoginDialog';
 import { useAWSCredentials } from '../context/AWSCredentialsContext';
 

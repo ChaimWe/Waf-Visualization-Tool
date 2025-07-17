@@ -6,6 +6,7 @@ import Tree from '../tree/NodeTransformer';
 import RuleTransformer from '../tree/RuleTransformer';
 import InspectorView from './InspectorView';
 import CloseIcon from '@mui/icons-material/Close';
+import AlbRuleTransformer from '../tree/AlbRuleTransformer';
 
 // Helper to detect WAF vs ALB data
 function detectDataType(data) {
@@ -38,11 +39,11 @@ export default function WAFView() {
     return null;
   }, [data, dataType]);
 
-  // Placeholder for ALB transformation
+  // ALB transformation using AlbRuleTransformer
   const albTransformed = useMemo(() => {
     if (dataType === 'alb' && data && Array.isArray(data.Rules)) {
-      // TODO: Implement ALB transformation logic
-      return data.Rules;
+      const transformer = new AlbRuleTransformer(data.Rules);
+      return transformer.transformRules();
     }
     return null;
   }, [data, dataType]);
@@ -76,18 +77,15 @@ export default function WAFView() {
           />
         </Box>
       ) : dataType === 'alb' && albTransformed ? (
-        <Paper elevation={2} sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="h5" sx={{ mb: 2 }}>ALB Rules Visualization (Coming Soon)</Typography>
-          <Typography variant="body1">ALB rules detected. Visualization for ALB rules will be implemented here.</Typography>
-          <Box sx={{ mt: 2 }}>
-            {albTransformed.map((rule, idx) => (
-              <Paper key={idx} sx={{ p: 2, mb: 2, cursor: 'pointer' }} onClick={() => { setInspectorRules(albTransformed); setInspectorSelected(rule); setInspectorOpen(true); }}>
-                <Typography variant="subtitle1"><strong>{rule.Name || rule.name}</strong></Typography>
-                <Typography variant="body2">Priority: {rule.Priority || rule.priority}</Typography>
-              </Paper>
-            ))}
-          </Box>
-        </Paper>
+        <Box sx={{ width: '100%', height: '100%', p: 0, m: 0 }}>
+          <FlowChart
+            allNodes={albTransformed.nodes}
+            allEdges={albTransformed.edges}
+            selectedNode={null}
+            setSelectedNode={handleNodeSelect}
+            style={{ width: '100%' }}
+          />
+        </Box>
       ) : (
         <Paper elevation={2} sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="h6">No valid WAF or ALB data detected.</Typography>
