@@ -1,143 +1,138 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Button, Stack, Grid, useTheme } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
+import React from 'react';
+import { Box, Typography, Stack } from '@mui/material';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import BugReportIcon from '@mui/icons-material/BugReport';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
-import logo from '../assets/Lightmode-logo.png';
-import AWSLoginDialog from '../components/AWSLoginDialog';
-import { useAWSCredentials } from '../context/AWSCredentialsContext';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@mui/material';
 
-export default function HomePage() {
+const FeatureCard = ({ icon, title, description }) => (
+  <Box
+    sx={{
+      width: { xs: '100%', sm: '300px' },
+      height: '300px',
+      border: '1px solid #e0e0e0',
+      borderRadius: '16px',
+      boxShadow: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      p: 2,
+      m: 1,
+      textAlign: 'center',
+      transition: 'transform 0.3s',
+      '&:hover': {
+        transform: 'scale(1.02)',
+      },
+    }}
+  >
+    <Box sx={{ fontSize: 40, mb: 1 }}>{icon}</Box>
+    <Typography variant="h6" fontWeight="bold" gutterBottom>
+      {title}
+    </Typography>
+    <Typography variant="body2" color="text.secondary">
+      {description}
+    </Typography>
+  </Box>
+);
+
+const Section = ({ title, features, bgColor }) => (
+  <Box sx={{ backgroundColor: bgColor, py: 6, px: 2 }}>
+    <Typography variant="h4" align="center" fontWeight="bold" gutterBottom>
+      {title}
+    </Typography>
+    <Stack
+      direction={{ xs: 'column', md: 'row' }}
+      justifyContent="center"
+      alignItems="center"
+      flexWrap="wrap"
+      spacing={2}
+    >
+      {features.map((feature, index) => (
+        <FeatureCard key={index} {...feature} />
+      ))}
+    </Stack>
+  </Box>
+);
+
+const HomePage = () => {
   const navigate = useNavigate();
-  const theme = useTheme();
-  const [awsLoginOpen, setAwsLoginOpen] = useState(false);
 
   const features = [
     {
-      icon: <RemoveRedEyeIcon sx={{ fontSize: 40, color: theme.palette.primary.main }} />,
+      icon: <VisibilityIcon color="primary" fontSize="large" />,
       title: 'Interactive Visualization',
-      description: 'Explore your WAF rules through dynamic, interactive graphs that show relationships and dependencies at a glance.',
-      action: () => navigate('/explorer'),
+      description:
+        'Explore your WAF rules through dynamic, interactive graphs that show relationships and dependencies at a glance.',
     },
     {
-      icon: <AccountTreeIcon sx={{ fontSize: 40, color: theme.palette.success.main }} />,
+      icon: <BugReportIcon color="success" fontSize="large" />,
       title: 'Rule Testing & Debugging',
-      description: 'Test your WAF rules against real requests and see exactly how they behave in different scenarios.',
-      action: () => navigate('/debugger'),
+      description:
+        'Test your WAF rules against real requests and see exactly how they behave in different scenarios.',
     },
     {
-      icon: <CloudUploadIcon sx={{ fontSize: 40, color: theme.palette.secondary.main }} />,
+      icon: <CloudUploadIcon sx={{ color: 'purple' }} fontSize="large" />,
       title: 'AI-Powered Insights',
-      description: 'Get intelligent recommendations and explanations about your WAF rules from our AI assistant.',
-      action: () => navigate('/ai'),
+      description:
+        'Get intelligent recommendations and explanations about your WAF rules from our AI assistant.',
     },
   ];
 
-  const benefits = [
+  const whyUse = [
     {
-      icon: <CheckCircleIcon sx={{ fontSize: 32, color: theme.palette.primary.main }} />,
-      title: 'Enhanced Security',
-      description: 'Identify gaps and optimize your WAF configuration for better protection.',
+      icon: <VisibilityIcon color="primary" fontSize="large" />,
+      title: 'Instant Clarity',
+      description:
+        'Visualizing your rules helps uncover logic issues and hidden dependencies.',
     },
     {
-      icon: <CheckCircleIcon sx={{ fontSize: 32, color: theme.palette.success.main }} />,
-      title: 'Improved Performance',
-      description: 'Streamline your rules for faster processing and reduced latency.',
+      icon: <BugReportIcon color="success" fontSize="large" />,
+      title: 'Save Time & Errors',
+      description:
+        'Debugging visually is faster and helps reduce misconfigurations.',
     },
     {
-      icon: <CheckCircleIcon sx={{ fontSize: 32, color: theme.palette.secondary.main }} />,
-      title: 'Better Understanding',
-      description: 'Visualize complex rule relationships that are impossible to see in code alone.',
+      icon: <CloudUploadIcon sx={{ color: 'purple' }} fontSize="large" />,
+      title: 'AI-Driven Efficiency',
+      description:
+        'Let our assistant help you refine your rule sets with confidence.',
     },
   ];
 
   return (
-    <Box sx={{ fontFamily: 'Poppins, sans-serif' }}>
-      {/* Hero Section */}
+    <Box>
+      {/* Header Section */}
       <Box
         sx={{
-          backgroundColor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#f5f5f5',
-          textAlign: 'center',
+          backgroundColor: '#f5f6fa',
           py: 10,
           px: 2,
+          textAlign: 'center',
         }}
       >
-        <img src={logo} alt="Logo" style={{ height: 80, marginBottom: 20 }} />
-        <Typography variant="h2" fontWeight={700} gutterBottom>
-          Powerful Visualization and Management
+        <Typography variant="h3" fontWeight="bold" gutterBottom>
+          Powerful Visualization for Your AWS WAF ACL
         </Typography>
-        <Typography variant="h4" color="text.secondary" gutterBottom>
-          For Your AWS WAF ACL and ALB Rules
+        <Typography variant="h5" gutterBottom>
+          Analyze, Understand, and Optimize Your Rules Instantly
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 600, margin: '0 auto', mb: 4 }}>
-          Instantly explore complex rule sets, analyze dependencies, and debug your Web ACL or ALB configurations — all in one intuitive interface.
+        <Typography variant="body1" color="text.secondary" mb={4}>
+          Upload your JSON config and explore your rule structure, dependencies, and logic flow — effortlessly.
         </Typography>
-        <Button
-          variant="contained"
-          size="large"
-          startIcon={<RemoveRedEyeIcon />}
-          onClick={() => navigate('/explorer')}
-          sx={{ borderRadius: 3, fontWeight: 600, px: 4, py: 1.5 }}
-        >
+        <Button size="large" variant="contained" onClick={() => navigate('/explorer')}>
           Start Visualization
         </Button>
       </Box>
 
-      {/* Features Section */}
-      <Box sx={{ py: 8, px: 2 }}>
-        <Typography variant="h4" align="center" fontWeight={700} gutterBottom>
-          Key Features
-        </Typography>
-        <Grid container spacing={4} justifyContent="center">
-          {features.map((feature) => (
-            <Grid item xs={12} sm={6} md={4} key={feature.title}>
-              <Box sx={{ textAlign: 'center', p: 3 }}>
-                {feature.icon}
-                <Typography variant="h6" fontWeight={600} sx={{ mt: 2 }}>
-                  {feature.title}
-                </Typography>
-                <Typography color="text.secondary" sx={{ mb: 2 }}>
-                  {feature.description}
-                </Typography>
-                <Button
-                  variant="outlined"
-                  endIcon={<RemoveRedEyeIcon />}
-                  onClick={feature.action}
-                  sx={{ borderRadius: 3, px: 3 }}
-                >
-                  Explore
-                </Button>
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
+      {/* Key Features Section */}
+      <Section title="Key Features" features={features} bgColor="#ffffff" />
 
-      {/* Benefits Section */}
-      <Box sx={{ py: 8, px: 2, backgroundColor: theme.palette.mode === 'dark' ? '#121212' : '#fafafa' }}>
-        <Typography variant="h4" align="center" fontWeight={700} gutterBottom>
-          Why Use This Tool?
-        </Typography>
-        <Grid container spacing={4} justifyContent="center">
-          {benefits.map((benefit) => (
-            <Grid item xs={12} sm={6} md={4} key={benefit.title}>
-              <Box sx={{ textAlign: 'center', p: 3 }}>
-                {benefit.icon}
-                <Typography variant="h6" fontWeight={600} sx={{ mt: 2 }}>
-                  {benefit.title}
-                </Typography>
-                <Typography color="text.secondary">
-                  {benefit.description}
-                </Typography>
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-
-      <AWSLoginDialog open={awsLoginOpen} onClose={() => setAwsLoginOpen(false)} />
+      {/* Why Use Section */}
+      <Section title="Why Use This Tool?" features={whyUse} bgColor="#f5f6fa" />
     </Box>
   );
-}
+};
+
+export default HomePage;

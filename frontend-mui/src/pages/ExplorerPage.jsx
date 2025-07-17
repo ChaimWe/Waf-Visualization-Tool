@@ -131,68 +131,72 @@ export default function ExplorerPage() {
         setAclData={setAclData}
         setAlbData={setAlbData}
       />
-      <Paper elevation={3} sx={{
-        width: '100%',
-        mx: 0,
-        mt: 0,
-        pt: 0,
-        p: 3, // internal padding
-        borderRadius: 4,
-        mb: 3,
-        boxSizing: 'border-box',
-        background: theme.palette.background.paper,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'stretch',
-        flexShrink: 0,
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <BugReportIcon color="primary" />
-          <Typography variant="h5" fontWeight={700}>
-            WAF Rule Explorer
-          </Typography>
-        </Box>
-        {/* Control bar for toggles */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 0, pt: 0, mb: 0, ml: 2 }}>
-          <ToggleButtonGroup
-            value={ruleSet}
-            exclusive
-            onChange={(_, v) => v && setRuleSet(v)}
-            sx={{ mb: 2 }}
-          >
-            <ToggleButton value="acl">ACL</ToggleButton>
-            <ToggleButton value="alb">ALB</ToggleButton>
-            <ToggleButton value="waf">WAF</ToggleButton>
-          </ToggleButtonGroup>
-          <ToggleButtonGroup
-            value={viewMode}
-            exclusive
-            onChange={(_, v) => v && setViewMode(v)}
-            size="small"
-          >
-            <ToggleButton value="tree">Tree View</ToggleButton>
-            <ToggleButton value="inspector">Inspector View</ToggleButton>
-          </ToggleButtonGroup>
-          <ToggleButtonGroup
-            value={nodesPerRow}
-            exclusive
-            onChange={(_, v) => v && setNodesPerRow(v)}
-            size="small"
-          >
-            <ToggleButton value={8}>8 / row</ToggleButton>
-            <ToggleButton value={16}>16 / row</ToggleButton>
-          </ToggleButtonGroup>
-          <ToggleButtonGroup
-            value={orderBy}
-            exclusive
-            onChange={(_, v) => v && setOrderBy(v)}
-            size="small"
-          >
-            <ToggleButton value="dependency">Order: Dependency</ToggleButton>
-            <ToggleButton value="number">Order: Number</ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-      </Paper>
+<Paper
+  elevation={2}
+  sx={{
+    background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fdfdfd',
+    borderRadius: 2,
+    px: 2,
+    py: 1,
+    my: 2,
+    maxWidth: 'fit-content', // לא ייקח את כל הרוחב
+    mx: 'auto', // ממרכז את ה-Paper עצמו
+    boxShadow: 2,
+  }}
+>
+  <Stack
+    direction={{ xs: 'column', md: 'row' }}
+    spacing={0.5}
+    alignItems="center"
+    justifyContent="center" // ממרכז את הכפתורים בתוך ה-Stack
+    flexWrap="wrap"
+    sx={{ gap: 0.5 }}
+  >
+    <ToggleButtonGroup
+      value={ruleSet}
+      exclusive
+      onChange={(_, v) => v && setRuleSet(v)}
+      size="small"
+    >
+      <ToggleButton value="acl" sx={{ fontWeight: 'bold' }}>CDN-WAF</ToggleButton>
+      <ToggleButton value="alb" sx={{ fontWeight: 'bold' }}>WAF-ALB</ToggleButton>
+      <ToggleButton value="together" sx={{ fontWeight: 'bold' }}>COMBINED-WAF</ToggleButton>
+    </ToggleButtonGroup>
+
+    <ToggleButtonGroup
+      value={viewMode}
+      exclusive
+      onChange={(_, v) => v && setViewMode(v)}
+      size="small"
+    >
+      <ToggleButton value="tree" sx={{ fontWeight: 'bold' }}>TREE VIEW</ToggleButton>
+      <ToggleButton value="inspector" sx={{ fontWeight: 'bold' }}>INSPECTOR VIEW</ToggleButton>
+    </ToggleButtonGroup>
+
+    <ToggleButtonGroup
+      value={nodesPerRow}
+      exclusive
+      onChange={(_, v) => v && setNodesPerRow(v)}
+      size="small"
+    >
+      <ToggleButton value={8} sx={{ fontWeight: 'bold' }}>8 / ROW</ToggleButton>
+      <ToggleButton value={16} sx={{ fontWeight: 'bold' }}>16 / ROW</ToggleButton>
+    </ToggleButtonGroup>
+
+    <ToggleButtonGroup
+      value={orderBy}
+      exclusive
+      onChange={(_, v) => v && setOrderBy(v)}
+      size="small"
+    >
+      <ToggleButton value="dependency" sx={{ fontWeight: 'bold' }}>ORDER: DEPENDENCY</ToggleButton>
+      <ToggleButton value="number" sx={{ fontWeight: 'bold' }}>ORDER: PRIORITY</ToggleButton>
+    </ToggleButtonGroup>
+  </Stack>
+</Paper>
+
+
+
       <Box sx={{
         position: 'relative',
         zIndex: 1,
