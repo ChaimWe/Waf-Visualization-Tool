@@ -553,7 +553,7 @@ const FlowChartInner = forwardRef(({
                     }}>
                         <Typography variant="h6" sx={{ mb: 1 }}>How to Read This View</Typography>
                         <Typography variant="body2" sx={{ mb: 2 }}>
-                          {/* ALB WAF legend (shown only if albMode is true) */}
+                          {/* Combined WAF (Interlinked) legend (shown if not albMode) */}
                           {albMode || (Array.isArray(allNodes) && allNodes.some(n => n.style && n.style.background === '#81c784')) ? (
                             <>
                               <b>ALB WAF Node Colors:</b><br/>
@@ -568,8 +568,9 @@ const FlowChartInner = forwardRef(({
                             </>
                           ) : (
                             <>
-                              <b>Node Colors:</b><br/>
+                              <b>Combined WAF (Interlinked) Node Colors:</b><br/>
                               <span style={{ color: '#1976d2', fontWeight: 600 }}>Blue</span>: ACL rules (label logic)<br/>
+                              <span style={{ color: '#43a047', fontWeight: 600 }}>Green</span>: ALB rules<br/>
                               <span style={{ color: '#d32f2f', fontWeight: 600 }}>Red</span>: Blocked action nodes/edges<br/>
                               <span style={{ color: '#e75480', fontWeight: 600, border: '2px solid #e75480', padding: '0 4px', borderRadius: 3 }}>Pink border</span>: Label-emitting rules<br/>
                               <br/>

@@ -160,7 +160,7 @@ export default function ExplorerPage() {
     >
       <ToggleButton value="acl" sx={{ fontWeight: 'bold' }}>CDN-WAF</ToggleButton>
       <ToggleButton value="alb" sx={{ fontWeight: 'bold' }}>WAF-ALB</ToggleButton>
-      <ToggleButton value="together" sx={{ fontWeight: 'bold' }}>COMBINED-WAF</ToggleButton>
+      <ToggleButton value="waf" sx={{ fontWeight: 'bold' }}>COMBINED-WAF</ToggleButton>
     </ToggleButtonGroup>
 
     <ToggleButtonGroup
