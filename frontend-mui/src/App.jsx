@@ -1,19 +1,8 @@
 import * as React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import AppBar from '@mui/material/AppBar';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
-import Divider from '@mui/material/Divider';
-import Drawer from '@mui/material/Drawer';
-import IconButton from '@mui/material/IconButton';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import MenuIcon from '@mui/icons-material/Menu';
 import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import HomePage from './pages/HomePage';
@@ -23,28 +12,16 @@ import AlbPage from './pages/AlbPage';
 import AlbAclPage from './pages/AlbAclPage';
 import AIPage from './pages/AIPage';
 import RequestDebugger from './debugger/RequestDebugger';
-import { ThemeProvider } from './context/ThemeContext';
-import { DataSourceProvider, useDataSource } from './context/DataSourceContext';
-import { AWSCredentialsProvider } from './context/AWSCredentialsContext';
+import { useDataSource } from './context/DataSourceContext';
 
-const drawerWidth = 240;
 
-const navItems = [
-  { text: 'Home', path: '/' },
-  { text: 'Explorer', path: '/explorer' },
-  { text: 'About', path: '/about' },
-  { text: 'AI', path: '/ai' },
-  { text: 'ALB', path: '/alb/1' }, // Example static ALB id for navigation
-  { text: 'ALB + ACL', path: '/alb-acl/1/1' }, // Example static ids
-];
-
-export default function App(props) {
+export default function App() {
   const [sidebarOpen, setSidebarOpen] = React.useState(false); // Sidebar collapsed by default
   const { aclData, albData, setAclData, setAlbData, clearAclData, clearAlbData } = useDataSource();
 
   return (
     <Router>
-      <Box sx={{ width: '100%', height: '100vh', minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'row', overflow: 'hidden' }}>
+      <Box sx={{ width: '100%', height: '100vh', minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'row' }}>
         <CssBaseline />
         <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} variant="permanent" />
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, width: '100%' }}>
