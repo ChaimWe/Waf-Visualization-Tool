@@ -2,27 +2,18 @@ import React, { useState, useEffect, useCallback, forwardRef, useMemo } from 're
 import ReactFlow, {
     Controls,
     useReactFlow,
-    Background,
     ReactFlowProvider,
-    MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import CustomNode from './CustomNode';
 import { useThemeContext } from '../../context/ThemeContext';
-import { IconButton, Tooltip, ToggleButton, ToggleButtonGroup } from '@mui/material';
-import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
-import LockIcon from '@mui/icons-material/Lock';
-import LockOpenIcon from '@mui/icons-material/LockOpen';
-import html2canvas from 'html2canvas';
+import { IconButton, Tooltip } from '@mui/material';
+import html2canvas from 'html2canvas';  
 import { jsPDF } from 'jspdf';
 import CustomPolylineEdge from './CustomPolylineEdge';
 import { Box } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import { Button } from '@mui/material';
 import { Typography } from '@mui/material';
 
@@ -386,64 +377,6 @@ const FlowChartInner = forwardRef(({
         // No-op for now
     }, []);
 
-    // Layout logic for nodes
-    // const layoutNodes = useCallback((nodes, edges, orderBy, nodesPerRow) => { // This line is removed as per the edit hint
-    //     if (orderBy === 'number') { // This line is removed as per the edit hint
-    //         // Grid layout for number sort // This line is removed as per the edit hint
-    //         const GRID_SIZE = 180; // This line is removed as per the edit hint
-    //         return nodes.map((node, index) => { // This line is removed as per the edit hint
-    //             const row = Math.floor(index / nodesPerRow); // This line is removed as per the edit hint
-    //             const col = index % nodesPerRow; // This line is removed as per the edit hint
-    //             return { // This line is removed as per the edit hint
-    //                 ...node, // This line is removed as per the edit hint
-    //                 position: { x: col * GRID_SIZE, y: row * GRID_SIZE }, // This line is removed as per the edit hint
-    //             }; // This line is removed as per the edit hint
-    //         }); // This line is removed as per the edit hint
-    //     } else if (orderBy === 'dependency') { // This line is removed as per the edit hint
-    //         // Group nodes by color/type for dependency sort // This line is removed as per the edit hint
-    //         const colorGroups = { // This line is removed as per the edit hint
-    //             gray: [], // This line is removed as per the edit hint
-    //             blue: [], // This line is removed as per the edit hint
-    //             green: [], // This line is removed as per the edit hint
-    //         }; // This line is removed as per the edit hint
-    //         nodes.forEach(n => { // This line is removed as per the edit hint
-    //             const color = (n.data.color || '').toLowerCase(); // This line is removed as per the edit hint
-    //             if (color === 'blue') colorGroups.blue.push(n); // This line is removed as per the edit hint
-    //             else if (color === 'green') colorGroups.green.push(n); // This line is removed as per the edit hint
-    //             else colorGroups.gray.push(n); // This line is removed as per the edit hint
-    //         }); // This line is removed as per the edit hint
-    //         const GRID_SIZE = 180; // This line is removed as per the edit hint
-    //         const groupOrder = ['gray', 'blue', 'green']; // This line is removed as per the edit hint
-    //         let positioned = []; // This line is removed as per the edit hint
-    //         let y = 0; // This line is removed as per the edit hint
-    //         groupOrder.forEach(group => { // This line is removed as per the edit hint
-    //             const groupNodes = colorGroups[group]; // This line is removed as per the edit hint
-    //             groupNodes.forEach((node, i) => { // This line is removed as per the edit hint
-    //                 positioned.push({ // This line is removed as per the edit hint
-    //                     ...node, // This line is removed as per the edit hint
-    //                     position: { x: i * GRID_SIZE, y }, // This line is removed as per the edit hint
-    //                 }); // This line is removed as per the edit hint
-    //             }); // This line is removed as per the edit hint
-    //             if (groupNodes.length > 0) y += GRID_SIZE; // This line is removed as per the edit hint
-    //         }); // This line is removed as per the edit hint
-    //         return positioned; // This line is removed as per the edit hint
-    //     } else { // This line is removed as per the edit hint
-    //         // Default to grid // This line is removed as per the edit hint
-    //         const GRID_SIZE = 180; // This line is removed as per the edit hint
-    //         return nodes.map((node, index) => { // This line is removed as per the edit hint
-    //             const row = Math.floor(index / nodesPerRow); // This line is removed as per the edit hint
-    //             const col = index % nodesPerRow; // This line is removed as per the edit hint
-    //             return { // This line is removed as per the edit hint
-    //                 ...node, // This line is removed as per the edit hint
-    //                 position: { x: col * GRID_SIZE, y: row * GRID_SIZE }, // This line is removed as per the edit hint
-    //             }; // This line is removed as per the edit hint
-    //         }); // This line is removed as per the edit hint
-    //     } // This line is removed as per the edit hint
-    // }, []); // This line is removed as per the edit hint
-
-    // Use layoutNodes to position nodes
-    // const positionedNodes = useMemo(() => layoutNodes(sortedNodes, edges, orderBy, nodesPerRow), [sortedNodes, edges, orderBy, nodesPerRow]); // This line is removed as per the edit hint
-
     const popupLayeredNodes = useMemo(() => {
         // This function is no longer needed as 'orderBy' is removed
         // It will return null or an empty array if 'orderBy' is removed
@@ -493,45 +426,6 @@ const FlowChartInner = forwardRef(({
     const fadeStrength = selectedNode ? 'strong' : hoveredNode ? 'mild' : null;
     const nodeFade = fadeStrength === 'strong' ? 0.1 : fadeStrength === 'mild' ? 0.4 : 1;
     const edgeFade = fadeStrength === 'strong' ? 0.01 : fadeStrength === 'mild' ? 0.15 : 0.5;
-
-    // Node style: circular, colored, centered text
-    // const nodesWithStyles = positionedNodes.map(node => {
-    //     // Assign color for sorting
-    //     let color = (node.data.color || '').toLowerCase();
-    //     let bgColor = '#bdbdbd'; // gray default
-    //     if (color === 'blue') bgColor = '#1976d2';
-    //     else if (color === 'green') bgColor = '#43a047';
-    //     // Style for circular node
-    //     const style = {
-    //         width: 56,
-    //         height: 56,
-    //         borderRadius: '50%',
-    //         background: bgColor,
-    //         color: '#fff',
-    //         display: 'flex',
-    //         alignItems: 'center',
-    //         justifyContent: 'center',
-    //         fontWeight: 600,
-    //         fontSize: 14,
-    //         boxShadow: node.selected ? '0 0 0 4px #ffd600' : '0 2px 8px rgba(0,0,0,0.08)',
-    //         border: node.selected ? '3px solid #ffd600' : '2px solid #fff',
-    //         transition: 'box-shadow 0.2s, border 0.2s',
-    //     };
-    //     return {
-    //         ...node,
-    //         style,
-    //     };
-    // });
-    // Edge style: smooth, light gray, no arrowheads
-    // const edgesWithStyles = filteredEdges.map(edge => {
-    //     // Remove sourceHandle/targetHandle/type if present
-    //     const { sourceHandle, targetHandle, type, ...rest } = edge;
-    //     return {
-    //         ...rest,
-    //         style: { stroke: '#bbb', strokeWidth: 2, opacity: 0.6 },
-    //         markerEnd: undefined,
-    //     };
-    // });
 
     const handleExportPdf = useCallback((afterExportCallback) => {
         const flowElement = document.querySelector('.react-flow');
@@ -620,17 +514,6 @@ const FlowChartInner = forwardRef(({
         pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
         pdf.save('tree-view-export.pdf');
     };
-
-    // Determine which nodes/edges are highlighted/faded
-    // const highlightSet = new Set(); // This line is removed as per the edit hint
-    // if (hoveredNode || selectedNode) {
-    //     const focusId = hoveredNode || selectedNode;
-    //     highlightSet.add(focusId);
-    //     edges.forEach(edge => {
-    //         if (edge.source === focusId) highlightSet.add(edge.target);
-    //         if (edge.target === focusId) highlightSet.add(edge.source);
-    //     });
-    // }
 
     // Pass isFaded and highlighted to nodes/edges
     const nodesWithStyles = nodesWithOffset.map(node => {
