@@ -167,14 +167,6 @@ const TEST_IPS = {
     ]
 };
 
-// AWS WAF Integration (placeholder for real implementation)
-const AWS_WAF_CONFIG = {
-    region: 'us-east-1',
-    webAclId: '',
-    ipSetIds: [],
-    ruleGroupArns: []
-};
-
 // Enhanced rule evaluation logic
 const evaluateWafRule = (rule, request) => {
     const result = {
@@ -418,7 +410,6 @@ const RequestDebugger = () => {
             try {
                 evaluationResults = await evaluateWithAWS(request);
             } catch (error) {
-                console.warn('AWS evaluation failed, falling back to local evaluation:', error);
                 // Fall back to local evaluation
                 evaluationResults = combinedRules.map(rule => {
                     if (rule.Statement || rule.Action) {
@@ -456,12 +447,6 @@ const RequestDebugger = () => {
         // 2. Use CheckCapacity or similar API calls
         // 3. Parse the results
         
-        console.log('AWS evaluation would be performed here with:', {
-            client: wafClient,
-            request: request,
-            credentials: credentials
-        });
-
         // Simulate AWS evaluation for now
         return combinedRules.map(rule => {
             const result = rule.Statement || rule.Action ? 

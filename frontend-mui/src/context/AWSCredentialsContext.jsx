@@ -21,7 +21,6 @@ export function AWSCredentialsProvider({ children }) {
         setCredentials(parsed);
         setIsAuthenticated(true);
       } catch (err) {
-        console.error('Failed to parse saved credentials:', err);
         localStorage.removeItem('aws-credentials');
       }
     }

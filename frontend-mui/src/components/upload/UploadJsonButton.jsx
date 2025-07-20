@@ -19,7 +19,7 @@ const UploadJsonButton = ({ onJsonUpload, label = "Upload JSON", loadedFileName 
         const jsonData = JSON.parse(event.target.result);
         onJsonUpload(jsonData, file.name);
       } catch (error) {
-        console.error("Error reading JSON file:", error);
+        // console.error("Error reading JSON file:", error);
       }
     };
     reader.readAsText(file);

@@ -1,8 +1,6 @@
 import React from 'react';
 import { Box, Container, Paper, Typography, Button, Chip, Alert } from '@mui/material';
 import { useThemeContext } from '../context/ThemeContext';
-// TODO: Replace with actual image if/when available
-// import bgImage from '../assets/pexels-scottwebb-1029624.jpg';
 import CustomSnackbar from '../components/popup/CustomSnackbar';
 import { useDataSource } from '../context/DataSourceContext';
 import AIChatPanel from '../components/popup/AIChatPanel';
@@ -76,7 +74,7 @@ const AIPage = () => {
 
     return (
         <ErrorBoundary>
-            <Box sx={{ width: '100vw', height: '100vh', p: 0, m: 0, position: 'relative', background: darkTheme ? '#222' : '#e0e0e0' }}>
+            <Box sx={{ width: '100vw', height: '100vh', p: 0, m: 0, position: 'relative', background: darkTheme ? '#222' : '#e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {/* Dark Overlay for Dark Mode */}
                 {darkTheme && (
                     <Box sx={{
@@ -91,11 +89,11 @@ const AIPage = () => {
                     }} />
                 )}
                 {/* Centered Content Area */}
-                <Box sx={{ width: '100%', maxWidth: 900, mx: 'auto', height: '100%', zIndex: 2, p: 0, m: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start' }}>
+                <Box sx={{ width: '100%', maxWidth: 480, mx: 'auto', zIndex: 2, p: 0, m: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                     {/* Header Section */}
-                    <Paper elevation={3} sx={{ p: 4, borderRadius: 4, mb: 4, width: '100%' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                            <SmartToyIcon color="primary" />
+                    <Paper elevation={4} sx={{ p: 4, borderRadius: 4, mb: 3, width: '100%', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, justifyContent: 'center' }}>
+                            <SmartToyIcon color="primary" sx={{ fontSize: 36 }} />
                             <Typography variant="h4" fontWeight={700}>
                                 AI Assistant
                             </Typography>
@@ -105,9 +103,9 @@ const AIPage = () => {
                         </Typography>
                     </Paper>
                     {/* Rule status and loader */}
-                    <Paper sx={{ p: 3, mb: 3, width: '100%' }}>
+                    <Paper sx={{ p: 3, mb: 3, width: '100%', textAlign: 'center' }}>
                         {rules.length === 0 ? (
-                            <Box sx={{ textAlign: 'center', py: 4 }}>
+                            <Box sx={{ textAlign: 'center', py: 2 }}>
                                 <Typography variant="body1" sx={{ color: theme.palette.text.primary, mb: 2 }}>
                                     No rules loaded yet. You can still chat with the AI Assistant!
                                 </Typography>
@@ -125,7 +123,7 @@ const AIPage = () => {
                                 <Typography variant="h6" sx={{ color: theme.palette.text.primary, mb: 2 }}>
                                     Rule Types:
                                 </Typography>
-                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2, justifyContent: 'center' }}>
                                     {(() => {
                                         const ruleTypes = {};
                                         rules.forEach(rule => {
@@ -147,7 +145,7 @@ const AIPage = () => {
                         )}
                     </Paper>
                     {/* AI Chat Panel always rendered */}
-                    <Box sx={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <Box sx={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                         <AIChatPanel
                             rule={rules[0] || {}}
                             allRules={rules}

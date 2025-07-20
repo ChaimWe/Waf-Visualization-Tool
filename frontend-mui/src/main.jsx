@@ -16,6 +16,7 @@ createRoot(document.getElementById('root')).render(
         <DataSourceProvider>
           <MuiThemeProvider theme={theme}>
             <CssBaseline />
+            {/* Optionally, wrap the whole app in a try/catch for non-React errors */}
             <App />
           </MuiThemeProvider>
         </DataSourceProvider>

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { Box, Typography, Tabs, Tab, Stack, Chip, Divider } from '@mui/material';
 import FlowChart from '../tree/FlowChart';
-import RuleDetailsSidebar, { getFields, getJson } from './RuleDetailsSidebar';
+import RuleDetailsContent from './RuleDetailsContent';
 
 function getRuleRelationships(rule, allRules) {
   // Find dependencies (rules this rule depends on)
@@ -149,28 +149,6 @@ function extractWafEdges(rules) {
 }
 
 // Extract content rendering from RuleDetailsSidebar
-function RuleDetailsContent({ rule, rules }) {
-  const relationships = useMemo(() => rule && rules ? getRuleRelationships(rule, rules) : { dependencies: [], dependents: [] }, [rule, rules]);
-  const aiSummaryText = useMemo(() => rule ? summarizeRule(rule, relationships) : '', [rule, relationships]);
-  if (!rule) return null;
-  return (
-    <Box sx={{ mb: 2, p: 2, bgcolor: '#f5f7fa', borderRadius: 2 }}>
-      <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 1 }}>AI Summary</Typography>
-      <Typography variant="body2" sx={{ whiteSpace: 'pre-line', wordBreak: 'break-word' }}>{aiSummaryText}</Typography>
-      <Stack direction="row" spacing={2} sx={{ mb: 2, mt: 2 }}>
-        <Chip label={rule.action || 'No Action'} color="info" variant="outlined" />
-        <Chip label={`Priority: ${rule.priority}`} color="error" variant="outlined" />
-      </Stack>
-      <Divider sx={{ my: 2 }} />
-      <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 1 }}>Fields</Typography>
-      <Box sx={{ mb: 2 }}>
-        {Object.entries(getFields(rule)).map(([k, v]) => (
-          <div key={k}><strong>{k}:</strong> {Array.isArray(v) ? v.join(', ') : v}</div>
-        ))}
-      </Box>
-    </Box>
-  );
-}
 function RuleJsonContent({ rule }) {
   if (!rule) return null;
   return (
@@ -318,10 +296,10 @@ const InspectorView = ({ rules, showSubgraph, initialSelected }) => {
               <Tab label="Warnings" />
               <Tab label="Subgraph" />
             </Tabs>
-            {tab === 0 && <RuleDetailsContent rule={selected} rules={rules} />}
-            {tab === 1 && <RuleJsonContent rule={selected} />}
-            {tab === 2 && <RuleDependenciesContent rule={selected} rules={rules} />}
-            {tab === 3 && <RuleWarningsContent rule={selected} />}
+            {tab === 0 && <RuleDetailsContent rule={selected} rules={rules} showJsonTab={true} showCloseButton={false} viewType={selected.nodeType === 'alb' ? 'alb' : selected.nodeType === 'acl' ? 'acl' : (selected.Conditions && selected.Statement ? 'combined' : selected.Conditions ? 'alb' : 'acl')} activeSection="details" />}
+            {tab === 1 && <RuleDetailsContent rule={selected} rules={rules} showJsonTab={true} showCloseButton={false} viewType={selected.nodeType === 'alb' ? 'alb' : selected.nodeType === 'acl' ? 'acl' : (selected.Conditions && selected.Statement ? 'combined' : selected.Conditions ? 'alb' : 'acl')} activeSection="json" />}
+            {tab === 2 && <RuleDetailsContent rule={selected} rules={rules} showJsonTab={true} showCloseButton={false} viewType={selected.nodeType === 'alb' ? 'alb' : selected.nodeType === 'acl' ? 'acl' : (selected.Conditions && selected.Statement ? 'combined' : selected.Conditions ? 'alb' : 'acl')} activeSection="dependencies" />}
+            {tab === 3 && <RuleDetailsContent rule={selected} rules={rules} showJsonTab={true} showCloseButton={false} viewType={selected.nodeType === 'alb' ? 'alb' : selected.nodeType === 'acl' ? 'acl' : (selected.Conditions && selected.Statement ? 'combined' : selected.Conditions ? 'alb' : 'acl')} activeSection="warnings" />}
             {tab === 4 && (
               <Box sx={{ flex: 1, minHeight: 0, minWidth: 0, p: 0, m: 0, width: '100%' }}>
                 {subNodes.length === 0 ? (

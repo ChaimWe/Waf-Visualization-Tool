@@ -3,7 +3,7 @@ import { Box, useTheme, Stack, Button, Drawer, ToggleButton, ToggleButtonGroup, 
 import Topbar from '../components/Topbar';
 import { useDataSource } from '../context/DataSourceContext';
 import FlowChart from '../components/tree/FlowChart';
-import RuleDetailsSidebar from '../components/WAFView/RuleDetailsSidebar';
+import RuleDetailsContent from '../components/WAFView/RuleDetailsContent';
 import InspectorView from '../components/WAFView/InspectorView';
 import RuleTransformer from '../components/tree/RuleTransformer';
 import AlbRuleTransformer from '../components/tree/AlbRuleTransformer';
@@ -306,8 +306,8 @@ export default function ExplorerPage() {
             maxWidth: 800,
             p: 0,
             boxShadow: 6,
-            top: 0,
-            height: '100vh',
+            top: '64px', // start below Topbar
+            height: 'calc(100vh - 64px)', // fill remaining height
             position: 'fixed',
             right: 0,
             left: 'auto',
@@ -336,10 +336,11 @@ export default function ExplorerPage() {
           onMouseDown={handleMouseDown}
         />
         {selectedNode && (
-          <RuleDetailsSidebar
+          <RuleDetailsContent
             rule={selectedNode}
             rules={ruleSet === 'waf' ? [...(aclData?.Rules || []), ...(albData?.Rules || [])] : rules}
             onClose={handleCloseInspector}
+            viewType={selectedNode.nodeType === 'alb' ? 'alb' : selectedNode.nodeType === 'acl' ? 'acl' : (selectedNode.Conditions && selectedNode.Statement ? 'combined' : selectedNode.Conditions ? 'alb' : 'acl')}
           />
         )}
       </Drawer>

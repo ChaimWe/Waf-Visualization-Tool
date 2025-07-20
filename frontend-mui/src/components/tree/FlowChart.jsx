@@ -197,28 +197,47 @@ const FlowChartInner = forwardRef(({
 
     // --- Add top margin to hierarchical layout ---
     const TOP_MARGIN = 60;
+    // --- DEBUG: Log nodes and edges ---
+    // React.useEffect(() => {
+    //   if (allNodes && allEdges) {
+    //     // Only log for non-empty arrays
+    //     if (allNodes.length > 0 || allEdges.length > 0) {
+    //       // eslint-disable-next-line no-console
+    //       // console.log('[FlowChart] nodes:', allNodes);
+    //       // eslint-disable-next-line no-console
+    //       // console.log('[FlowChart] edges:', allEdges);
+    //     }
+    //   }
+    // }, [allNodes, allEdges]);
+
+    // --- PATCH: Use provided node positions if present (for COMBINED-WAF view) ---
     const positionedNodes = useMemo(() => {
-        if (orderBy === 'number') {
-            const GRID_SIZE = 180;
-            return sortedNodes.map((node, index) => {
-                const row = Math.floor(index / nodesPerRow);
-                const col = index % nodesPerRow;
-                return {
-                    ...node,
-                    position: { x: col * GRID_SIZE, y: row * GRID_SIZE + TOP_MARGIN },
-                };
-            });
-        } else if (orderBy === 'dependency') {
-            // Use enhanced hierarchical layout for dependency order
-            const nodesWithLayout = hierarchicalLayout(sortedNodes, filteredEdges, nodesPerRow);
-            return nodesWithLayout.map(n => ({
-                ...n,
-                position: { x: n.position.x, y: n.position.y + TOP_MARGIN }
-            }));
-        } else {
-            return sortedNodes;
-        }
-    }, [sortedNodes, orderBy, nodesPerRow, filteredEdges]);
+      // If all nodes have a position property, use them directly
+      if (allNodes && allNodes.length > 0 && allNodes.every(n => n.position)) {
+        return allNodes;
+      }
+      // Otherwise, use the existing layout logic
+      if (orderBy === 'number') {
+        const GRID_SIZE = 180;
+        return sortedNodes.map((node, index) => {
+          const row = Math.floor(index / nodesPerRow);
+          const col = index % nodesPerRow;
+          return {
+            ...node,
+            position: { x: col * GRID_SIZE, y: row * GRID_SIZE + TOP_MARGIN },
+          };
+        });
+      } else if (orderBy === 'dependency') {
+        // Use enhanced hierarchical layout for dependency order
+        const nodesWithLayout = hierarchicalLayout(sortedNodes, filteredEdges, nodesPerRow);
+        return nodesWithLayout.map(n => ({
+          ...n,
+          position: { x: n.position.x, y: n.position.y + TOP_MARGIN }
+        }));
+      } else {
+        return sortedNodes;
+      }
+    }, [allNodes, sortedNodes, orderBy, nodesPerRow, filteredEdges]);
 
     // Add debugging for edge visibility
     useEffect(() => {

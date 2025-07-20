@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Box, TextField, Button, Typography, CircularProgress, Paper, Select, MenuItem, FormControl, InputLabel, Switch, FormControlLabel } from '@mui/material';
 import { useTheme } from '@mui/material';
 import { useThemeContext } from '../../context/ThemeContext';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
 
 // Instructions for different AI response styles
 const styleInstructions = {
@@ -65,6 +66,7 @@ export default function AIChatPanel({ rule, allRules, edges = [], isAIPage = fal
   const theme = useTheme();
   const messagesEndRef = useRef(null);
   const containerRef = useRef(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Chat state management
   const [messages, setMessages] = useState([
@@ -119,7 +121,6 @@ export default function AIChatPanel({ rule, allRules, edges = [], isAIPage = fal
     setInput('');
     try {
       const apiKey = import.meta.env.VITE_REACT_APP_OPENAI_API_KEY;
-      console.log('OpenAI Key:', apiKey); // Debug: log the API key (should start with sk-)
       const context = seeAllRules && Array.isArray(allRules) && allRules.length > 0
         ? `Rules: ${JSON.stringify(allRules.slice(0, 10))}`
         : rule && Object.keys(rule).length > 0
@@ -205,22 +206,114 @@ export default function AIChatPanel({ rule, allRules, edges = [], isAIPage = fal
   };
 
   return (
-    <Paper sx={{ p: 2, mt: 2, background: theme.palette.background.paper, color: theme.palette.text.primary, minHeight: 400 }}>
-      <Typography variant="h6" sx={{ mb: 1 }}>
-        AI Chat
-      </Typography>
-      <Box ref={containerRef} sx={{ maxHeight: 300, overflowY: 'auto', mb: 2, p: 1, background: theme.palette.background.paper, borderRadius: 1, border: `1px solid ${theme.palette.divider}` }}>
+    <Paper elevation={6} sx={{
+      p: 0,
+      mt: 0,
+      width: '100%',
+      maxWidth: 420,
+      borderRadius: 4,
+      boxShadow: 6,
+      background: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      minHeight: 480,
+      position: 'relative',
+    }}>
+      {/* Header with settings icon */}
+      <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+        <SmartToyIcon color="primary" sx={{ fontSize: 28, mr: 1 }} />
+        <Typography variant="h6" fontWeight={700} sx={{ flex: 1, textAlign: 'center' }}>
+          AI Chat
+        </Typography>
+        <Button
+          aria-label="Settings"
+          onClick={() => setSettingsOpen(true)}
+          sx={{ minWidth: 0, p: 0.5, ml: 'auto' }}
+        >
+          <span role="img" aria-label="settings">⚙️</span>
+        </Button>
+      </Box>
+      {/* Settings Popover */}
+      {settingsOpen && (
+        <Box sx={{
+          position: 'absolute',
+          top: 56,
+          right: 16,
+          zIndex: 10,
+          bgcolor: theme.palette.background.paper,
+          boxShadow: 4,
+          borderRadius: 2,
+          p: 2,
+          minWidth: 180,
+        }}>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>Settings</Typography>
+          <FormControl size="small" sx={{ minWidth: 140, mb: 1 }}>
+            <InputLabel>Style</InputLabel>
+            <Select value={responseStyle} label="Style" onChange={handleStyleChange}>
+              <MenuItem value="concise">Concise</MenuItem>
+              <MenuItem value="detailed">Detailed</MenuItem>
+              <MenuItem value="bullet">Bullet</MenuItem>
+              <MenuItem value="table">Table</MenuItem>
+              <MenuItem value="human">Human</MenuItem>
+              <MenuItem value="json">JSON</MenuItem>
+            </Select>
+          </FormControl>
+          <Box sx={{ textAlign: 'right' }}>
+            <Button size="small" onClick={() => setSettingsOpen(false)}>Close</Button>
+          </Box>
+        </Box>
+      )}
+      {/* Chat Area */}
+      <Box ref={containerRef} sx={{
+        width: '100%',
+        flex: 1,
+        maxHeight: 320,
+        minHeight: 220,
+        overflowY: 'auto',
+        p: 2,
+        background: theme.palette.mode === 'dark' ? '#23272f' : '#f7f9fc',
+        borderRadius: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1,
+      }}>
         {messages.map((msg, idx) => (
-          <Box key={idx} sx={{ mb: 1, textAlign: msg.sender === 'user' ? 'right' : 'left' }}>
-            <Typography variant="body2" sx={{ fontWeight: msg.sender === 'user' ? 'bold' : 'normal', color: msg.sender === 'user' ? 'primary.main' : 'secondary.main' }}>
-              {msg.sender === 'user' ? 'You' : 'AI'}:
-            </Typography>
-            <Box>{renderAiMessage(msg)}</Box>
+          <Box
+            key={idx}
+            sx={{
+              display: 'flex',
+              justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+              width: '100%',
+            }}
+          >
+            <Box
+              sx={{
+                maxWidth: '80%',
+                bgcolor: msg.sender === 'user' ? 'primary.main' : 'grey.200',
+                color: msg.sender === 'user' ? '#fff' : 'text.primary',
+                px: 2,
+                py: 1,
+                borderRadius: 3,
+                mb: 0.5,
+                boxShadow: 1,
+                fontSize: 15,
+                wordBreak: 'break-word',
+                alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+              }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: msg.sender === 'user' ? 600 : 400, color: msg.sender === 'user' ? '#fff' : 'secondary.main', mb: 0.5 }}>
+                {msg.sender === 'user' ? 'You' : 'AI'}:
+              </Typography>
+              <Box>{renderAiMessage(msg)}</Box>
+            </Box>
           </Box>
         ))}
         <div ref={messagesEndRef} />
       </Box>
-      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+      {/* Input Area */}
+      <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: 1, p: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
         <TextField
           fullWidth
           size="small"
@@ -230,17 +323,18 @@ export default function AIChatPanel({ rule, allRules, edges = [], isAIPage = fal
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') sendMessage(); }}
           disabled={loading}
+          sx={{ bgcolor: '#fff', borderRadius: 2 }}
         />
         <Button
           variant="contained"
           onClick={sendMessage}
           disabled={loading || !input.trim()}
           sx={{
-            minWidth: 100,
+            minWidth: 90,
             fontWeight: 600,
             borderRadius: 3,
             fontSize: '1.1rem',
-            px: 3,
+            px: 2,
             py: 1,
             background: 'linear-gradient(45deg, #1976d2, #2e7d32)',
             color: '#fff',
@@ -254,17 +348,6 @@ export default function AIChatPanel({ rule, allRules, edges = [], isAIPage = fal
         >
           {loading ? <CircularProgress size={20} /> : 'Send'}
         </Button>
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>Style</InputLabel>
-          <Select value={responseStyle} label="Style" onChange={handleStyleChange}>
-            <MenuItem value="concise">Concise</MenuItem>
-            <MenuItem value="detailed">Detailed</MenuItem>
-            <MenuItem value="bullet">Bullet</MenuItem>
-            <MenuItem value="table">Table</MenuItem>
-            <MenuItem value="human">Human</MenuItem>
-            <MenuItem value="json">JSON</MenuItem>
-          </Select>
-        </FormControl>
       </Box>
     </Paper>
   );

@@ -12,7 +12,8 @@ export default function AlbPage() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch(`http://localhost:5000/api/alb/${albId}`)
+    const apiBase = import.meta.env.VITE_REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
+    fetch(`${apiBase}/alb/${albId}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch ALB');
         return res.json();

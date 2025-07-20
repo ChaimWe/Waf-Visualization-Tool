@@ -39,7 +39,6 @@ export default function Sidebar({ open, setOpen, variant = 'permanent' }) {
   const menuItems = [
     { key: 'home', label: 'Home', icon: <HomeIcon />, onClick: () => navigate('/') },
     { key: 'tree', label: 'WAF Tree', icon: <TreeIcon />, onClick: () => navigate('/explorer') },
-    { key: 'wafalb', label: 'WAF & ALB Visualizer', icon: <MergeIcon />, onClick: () => navigate('/alb-acl/1/1') },
     { key: 'debugger', label: 'Request Debugger', icon: <DebugIcon />, onClick: () => navigate('/debugger') },
     { key: 'ai', label: 'AI Assistant', icon: <AIIcon />, onClick: () => navigate('/ai') },
   ];
@@ -91,7 +90,7 @@ export default function Sidebar({ open, setOpen, variant = 'permanent' }) {
         {menuItems.map((item) => (
           <ListItem key={item.key} disablePadding sx={{ display: 'block' }}>
             <ListItemButton
-              selected={isSelected(item.key === 'home' ? '/' : item.key === 'tree' ? '/explorer' : item.key === 'wafalb' ? '/alb-acl' : item.key === 'debugger' ? '/debugger' : item.key === 'ai' ? '/ai' : '')}
+              selected={isSelected(item.key === 'home' ? '/' : item.key === 'tree' ? '/explorer' : item.key === 'debugger' ? '/debugger' : item.key === 'ai' ? '/ai' : '')}
               onClick={item.onClick}
               sx={{
                 minHeight: 48,

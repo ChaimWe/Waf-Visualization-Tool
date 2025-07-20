@@ -43,7 +43,7 @@ npm run build
 ```
 
 ## 6. Testing
-- Add tests with your preferred framework (Jest, React Testing Library, etc.)
+- (No automated tests are included in this project. Manual testing is required.)
 
 ## 7. Linting & Formatting
 - Run `npm run lint` to check code style.

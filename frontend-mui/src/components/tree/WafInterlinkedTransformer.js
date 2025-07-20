@@ -27,11 +27,11 @@ export default class WafInterlinkedTransformer {
     const aclRows = Math.ceil(this.aclRules.length / nodesPerRow);
     const albY = aclRows * rowGap + groupGap;
 
-    // Create nodes for ACL rules (parents)
+    // Create nodes for ACL rules (top group)
     const aclNodes = this.aclRules.map((rule, idx) => ({
       id: 'acl-' + (rule.Name || rule.name || rule.Id || String(idx)),
       type: 'custom-node',
-      position: { x: idx * 180, y: 0 }, // Top row
+      position: { x: idx * 200, y: 0 },
       data: {
         ...rule,
         nodeType: 'acl',
@@ -42,11 +42,11 @@ export default class WafInterlinkedTransformer {
         borderColor: '#e75480',
       },
     }));
-    // Create nodes for ALB rules (children), offset x by 90px for separation, y by calculated spacing
+    // Create nodes for ALB rules (bottom group, y-offset)
     const albNodes = this.albRules.map((rule, idx) => ({
       id: 'alb-' + (rule.Name || rule.name || rule.Id || String(idx)),
       type: 'custom-node',
-      position: { x: idx * 180 + 90, y: albY }, // Bottom row, offset x by 90px, y by calculated spacing
+      position: { x: idx * 200, y: albY },
       data: {
         ...rule,
         nodeType: 'alb',
@@ -58,66 +58,70 @@ export default class WafInterlinkedTransformer {
       },
     }));
 
-    // --- New edge logic ---
-    // 1. For each ACL rule, find injected headers via CustomRequestHandling when LabelMatchStatement is present
-    const aclInjectedHeaders = this.aclRules.map((rule, i) => {
-      // Find LabelMatchStatement
-      function findLabelMatch(obj) {
-        if (!obj || typeof obj !== 'object') return false;
-        if (obj.LabelMatchStatement && obj.LabelMatchStatement.Key) return true;
-        return Object.values(obj).some(findLabelMatch);
-      }
-      const hasLabelMatch = findLabelMatch(rule.Statement);
-      // Find injected headers
-      let injectedHeaders = [];
-      if (rule.Action?.Count?.CustomRequestHandling?.InsertHeaders) {
-        injectedHeaders = rule.Action.Count.CustomRequestHandling.InsertHeaders.map(h => h.Name.toLowerCase());
-      }
-      if (hasLabelMatch && injectedHeaders.length > 0) {
-        return { id: aclNodes[i].id, headers: injectedHeaders };
-      }
-      return null;
-    }).filter(Boolean);
-
-    // 2. For each ALB rule, find ByteMatchStatement on a header
-    const albHeaderMatches = this.albRules.map((rule, i) => {
-      // Find all ByteMatchStatements on headers
-      function findHeaderMatches(obj) {
-        if (!obj || typeof obj !== 'object') return [];
-        let matches = [];
-        if (obj.ByteMatchStatement && obj.ByteMatchStatement.FieldToMatch?.SingleHeader?.Name) {
-          matches.push(obj.ByteMatchStatement.FieldToMatch.SingleHeader.Name.toLowerCase());
-        }
-        Object.values(obj).forEach(val => {
-          matches = matches.concat(findHeaderMatches(val));
+    // --- Header-based edge logic ---
+    // 1. Find headers modified by ACL rules (robust, recursive, case-insensitive)
+    function findInsertedHeaders(obj) {
+      let headers = [];
+      if (!obj || typeof obj !== 'object') return headers;
+      // Look for CustomRequestHandling.InsertHeaders
+      if (obj.CustomRequestHandling && Array.isArray(obj.CustomRequestHandling.InsertHeaders)) {
+        obj.CustomRequestHandling.InsertHeaders.forEach(hdr => {
+          if (hdr.Name) headers.push(hdr.Name.toLowerCase());
         });
-        return matches;
       }
-      const headers = findHeaderMatches(rule.Statement);
-      if (headers.length > 0) {
-        return { id: albNodes[i].id, headers };
-      }
-      return null;
-    }).filter(Boolean);
-
-    // 3. Create edges from ACL to ALB if injected header matches inspected header
-    const edges = [];
-    for (const acl of aclInjectedHeaders) {
-      for (const alb of albHeaderMatches) {
-        const shared = acl.headers.filter(h => alb.headers.includes(h));
-        if (shared.length > 0) {
-          edges.push({
-            id: `edge-${acl.id}-${alb.id}`,
-            source: acl.id,
-            target: alb.id,
-            label: shared.join(', '),
-            type: 'custom',
-            data: { viewType: 'waf', targetAction: (albNodes.find(n => n.id === alb.id)?.data?.action || '') },
-          });
-        }
-      }
+      // Recurse into all object values
+      Object.values(obj).forEach(val => {
+        headers = headers.concat(findInsertedHeaders(val));
+      });
+      return headers;
     }
-
-    return { nodes: [...aclNodes, ...albNodes], edges };
+    const headerToAclNodes = {};
+    this.aclRules.forEach((rule, idx) => {
+      const headers = findInsertedHeaders(rule.Action);
+      headers.forEach(headerName => {
+        if (!headerToAclNodes[headerName]) headerToAclNodes[headerName] = [];
+        headerToAclNodes[headerName].push(aclNodes[idx]);
+      });
+    });
+    // 2. Find ALB rules that depend on headers (robust, recursive, case-insensitive)
+    function findHeaderMatches(obj) {
+      if (!obj || typeof obj !== 'object') return [];
+      let matches = [];
+      if (obj.FieldToMatch && obj.FieldToMatch.SingleHeader && obj.FieldToMatch.SingleHeader.Name) {
+        matches.push(obj.FieldToMatch.SingleHeader.Name.toLowerCase());
+      }
+      Object.values(obj).forEach(val => {
+        matches = matches.concat(findHeaderMatches(val));
+      });
+      return matches;
+    }
+    const headerToAlbNodes = {};
+    this.albRules.forEach((rule, idx) => {
+      const headers = findHeaderMatches(rule.Statement);
+      headers.forEach(headerName => {
+        if (!headerToAlbNodes[headerName]) headerToAlbNodes[headerName] = [];
+        headerToAlbNodes[headerName].push(albNodes[idx]);
+      });
+    });
+    // 3. Create edges for matching headers (case-insensitive)
+    const edges = [];
+    Object.keys(headerToAclNodes).forEach(headerName => {
+      if (headerToAlbNodes[headerName]) {
+        headerToAclNodes[headerName].forEach(aclNode => {
+          headerToAlbNodes[headerName].forEach(albNode => {
+            edges.push({
+              id: `edge-headerdep-${aclNode.id}-${albNode.id}`,
+              source: aclNode.id,
+              target: albNode.id,
+              type: 'custom',
+              edgeType: 'header-dependency',
+              label: `Header: ${headerName}`
+            });
+          });
+        });
+      }
+    });
+    const result = { nodes: [...aclNodes, ...albNodes], edges };
+    return result;
   }
 } 
