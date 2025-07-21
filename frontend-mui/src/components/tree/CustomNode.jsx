@@ -13,71 +13,27 @@ import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 
 const getNodeStyle = (action, diameter, isParent, isChild, darkTheme, isFaded, nodeType, viewType) => {
-    // Interlinked (WAF) view color coding
-    if (viewType === 'waf' || nodeType === 'acl' || nodeType === 'cdn-waf' || nodeType === 'alb' || nodeType === 'alb-waf') {
-        if (action === 'Block') {
-            return {
-                width: diameter,
-                height: diameter,
-                borderRadius: '50%',
-                background: '#d32f2f',
-                border: '3px solid #b71c1c',
-                color: '#fff',
-                fontWeight: 'bold',
-                boxShadow: darkTheme ? '0 4px 6px rgba(0, 0, 0, 0.4)' : '0 4px 6px rgba(56, 57, 59, 0.3)',
-                opacity: isFaded ? 0.3 : 1,
-                outline: 'none',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                padding: 0,
-                transition: 'all 0.3s ease',
-            };
-        }
-        if (nodeType === 'acl' || nodeType === 'cdn-waf') {
-            return {
-                width: diameter,
-                height: diameter,
-                borderRadius: '50%',
-                background: '#1976d2',
-                border: '3px solid #1565c0',
-                color: '#fff',
-                fontWeight: 'bold',
-                boxShadow: darkTheme ? '0 4px 6px rgba(0, 0, 0, 0.4)' : '0 4px 6px rgba(56, 57, 59, 0.3)',
-                opacity: isFaded ? 0.3 : 1,
-                outline: 'none',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                padding: 0,
-                transition: 'all 0.3s ease',
-            };
-        }
-        if (nodeType === 'alb' || nodeType === 'alb-waf') {
-            return {
-                width: diameter,
-                height: diameter,
-                borderRadius: '50%',
-                background: '#43a047',
-                border: '3px solid #2e7d32',
-                color: '#fff',
-                fontWeight: 'bold',
-                boxShadow: darkTheme ? '0 4px 6px rgba(0, 0, 0, 0.4)' : '0 4px 6px rgba(56, 57, 59, 0.3)',
-                opacity: isFaded ? 0.3 : 1,
-                outline: 'none',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                padding: 0,
-                transition: 'all 0.3s ease',
-            };
-        }
+    // Only use default blue style for WAF view, not CDN-WAF
+    if (viewType === 'waf' || nodeType === 'cdn-waf' || nodeType === 'alb' || nodeType === 'alb-waf') {
+        return {
+            width: diameter,
+            height: diameter,
+            borderRadius: '50%',
+            background: '#1976d2',
+            border: '3px solid #1565c0',
+            color: '#fff',
+            fontWeight: 'bold',
+            boxShadow: darkTheme ? '0 4px 6px rgba(0, 0, 0, 0.4)' : '0 4px 6px rgba(56, 57, 59, 0.3)',
+            opacity: isFaded ? 0.3 : 1,
+            outline: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            padding: 0,
+            transition: 'all 0.3s ease',
+        };
     }
     const nodeStyle = {
         width: diameter,
@@ -104,20 +60,20 @@ const getNodeStyle = (action, diameter, isParent, isChild, darkTheme, isFaded, n
     };
     // Original background and border logic
     if (isParent && !isChild) {
-        nodeStyle.background = darkTheme ? '#319177' : '#319177'; // blue
+        nodeStyle.background = darkTheme ? '#319177' : '#319177'; // green
         nodeStyle.border = `3px solid ${darkTheme ? '#319177' : '#319177'}`;
     } else if (!isParent && isChild) {
-        nodeStyle.background = darkTheme ? '#007fff' : '#007fff'; // green
+        nodeStyle.background = darkTheme ? '#007fff' : '#007fff'; // blue
         nodeStyle.border = `3px solid ${darkTheme ? '#007fff' : '#007fff'}`;
     } else if (isParent && isChild) {
-        nodeStyle.background = darkTheme ? '#7851a9' : '#7851a9'; // light sea green
+        nodeStyle.background = darkTheme ? '#7851a9' : '#7851a9'; // purple
         nodeStyle.border = `3px solid ${darkTheme ? '#7851a9' : '#7851a9'}`;
     } else {
         nodeStyle.background = darkTheme ? '#757575' : '#bdbdbd'; // gray
         nodeStyle.border = `3px solid ${darkTheme ? '#bdbdbd' : '#757575'}`;
     }
-    // Then override only the border color for ALB rule and ACL
-    if (nodeType === 'acl' || nodeType === 'wafrule') {
+    // Then override only the border color for ALB rule and ACL (but not in CDN-WAF view)
+    if ((nodeType === 'acl' && viewType !== 'cdn-waf') || nodeType === 'wafrule') {
         nodeStyle.border = '3px solid #e75480'; // pink
     } else if (nodeType === 'albrule') {
         nodeStyle.border = '3px solid orange';
@@ -173,37 +129,43 @@ export default function CustomNode({ data, id, selected, isFaded }) {
                     background: darkTheme ? '#fff' : '#000'
                 }} 
             />
-            <Tooltip title={iconTooltip} arrow>
-                <span>{icon}</span>
-            </Tooltip>
-            {/* Action indicator - tiny round-edged rectangle under the arrow symbol */}
-            {data.action && (
-                <div style={{
-                    position: 'absolute',
-                    top: 35,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: 16,
-                    height: 6,
-                    backgroundColor: data.action.toLowerCase() === 'allow' ? '#0072b2' : 
-                                   data.action.toLowerCase() === 'block' ? '#dc143c' :
-                                   data.action.toLowerCase() === 'count' ? '#faa500' : '#ff6b6b',
-                    borderRadius: 3,
-                    border: `1px solid ${data.action.toLowerCase() === 'allow' ? '#0072b2' : 
-                                       data.action.toLowerCase() === 'block' ? '#dc143c' :
-                                       data.action.toLowerCase() === 'count' ? '#faa500' : '#ff6b6b'}`,
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
-                    zIndex: 10
-                }} />
-            )}
-            {/* When rendering label/header names inside nodes, use the color and bold style as described above. */}
+            {/* Icon and action rectangle in a flex column */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', width: '100%' }}>
+                <Tooltip title={iconTooltip} arrow>
+                    <span>{icon}</span>
+                </Tooltip>
+                {/* Color-coded action rectangle for ACL, ALB, and Interlinked nodes */}
+                {((data.viewType === 'waf' || data.viewType === 'cdn-waf' || data.nodeType === 'acl' || data.nodeType === 'wafrule' || data.nodeType === 'alb' || data.nodeType === 'albrule' || data.borderColor === '#e75480') && data.action) && (
+                    <div style={{
+                        marginTop: 0,
+                        marginBottom: 0,
+                        width: 28,
+                        height: 10,
+                        backgroundColor: data.action.toLowerCase() === 'allow' ? '#43a047' :
+                                        data.action.toLowerCase() === 'block' ? '#d32f2f' :
+                                        data.action.toLowerCase() === 'count' ? '#faa500' : '#bdbdbd',
+                        borderRadius: 4,
+                        border: `2px solid ${data.action.toLowerCase() === 'allow' ? '#388e3c' :
+                                            data.action.toLowerCase() === 'block' ? '#b71c1c' :
+                                            data.action.toLowerCase() === 'count' ? '#faa500' : '#888'}`,
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                        zIndex: 10,
+                        display: 'block',
+                    }} />
+                )}
+            </div>
             <Tooltip title={data.Name || data.name} arrow>
                 <div style={{ fontWeight: 'bold', fontSize: 18, textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', color: '#fff', textShadow: darkTheme ? '0 1px 2px rgba(0,0,0,0.5)' : 'none', marginTop: 4 }}>{data.Name || data.name}</div>
             </Tooltip>
+            {/* Metric name below rule name */}
+            {data.metric && (
+                <div style={{ fontSize: 12, color: '#fff', textAlign: 'center', marginTop: 2, marginBottom: 2, fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
+                    {data.metric}
+                </div>
+            )}
             {/* Action and count/priority below name */}
-            <div style={{ fontSize: 14, color: '#e0e0e0', marginTop: 4, textAlign: 'center', fontWeight: 500 }}>
-                {data.action && <span style={{ marginRight: 4 }}>{data.action}</span>}
-                {(data.Priority !== undefined || data.priority !== undefined) && <span>| {data.Priority ?? data.priority}</span>}
+            <div style={{ fontSize: 14, color: '#e0e0e0', marginTop: 4, marginBottom: 8, textAlign: 'center', fontWeight: 500 }}>
+                {(data.Priority !== undefined || data.priority !== undefined) && <span>Priority: {data.Priority ?? data.priority}</span>}
             </div>
             <Handle 
                 type="source" 

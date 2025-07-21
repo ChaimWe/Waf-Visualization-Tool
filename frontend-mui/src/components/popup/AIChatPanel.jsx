@@ -121,8 +121,9 @@ export default function AIChatPanel({ rule, allRules, edges = [], isAIPage = fal
     setInput('');
     try {
       const apiKey = import.meta.env.VITE_REACT_APP_OPENAI_API_KEY;
+      // WARNING: Sending all rules may hit token limits for very large datasets.
       const context = seeAllRules && Array.isArray(allRules) && allRules.length > 0
-        ? `Rules: ${JSON.stringify(allRules.slice(0, 10))}`
+        ? `Rules: ${JSON.stringify(allRules)}`
         : rule && Object.keys(rule).length > 0
           ? `Rule: ${JSON.stringify(rule)}`
           : '';

@@ -29,24 +29,78 @@ export default function WAFView() {
   const [inspectorRules, setInspectorRules] = useState([]);
   const [inspectorSelected, setInspectorSelected] = useState(null);
 
+  // Filter state
+  const [nameFilter, setNameFilter] = useState('*');
+  const [actionFilter, setActionFilter] = useState('*');
+
+  // Compute available name filter options (A-Z, 0-9, *) from current rules, case sensitive
+  const nameFilterOptions = useMemo(() => {
+    let allNames = [];
+    if (dataType === 'waf' && data && Array.isArray(data.Rules)) {
+      allNames = data.Rules.map(r => r.Name || r.name || r.Id || r.id || '');
+    } else if (dataType === 'alb' && data && Array.isArray(data.Rules)) {
+      allNames = data.Rules.map(r => r.Name || r.name || r.Id || r.id || '');
+    }
+    const initials = Array.from(new Set(allNames.map(n => n[0]).filter(Boolean)));
+    initials.sort();
+    return ['*', ...initials];
+  }, [dataType, data]);
+
+  // Compute available action filter options from current rules, case sensitive
+  const actionFilterOptions = useMemo(() => {
+    let allActions = [];
+    if (dataType === 'waf' && data && Array.isArray(data.Rules)) {
+      allActions = data.Rules.map(r => r.Action ? Object.keys(r.Action)[0] : (r.action || ''));
+    } else if (dataType === 'alb' && data && Array.isArray(data.Rules)) {
+      allActions = data.Rules.map(r => r.Actions && Array.isArray(r.Actions) ? r.Actions[0]?.Type : (r.action || ''));
+    }
+    const unique = Array.from(new Set(allActions.filter(Boolean)));
+    unique.sort();
+    return ['*', ...unique];
+  }, [dataType, data]);
+
+  // Filter rules according to filters
+  const filteredRules = useMemo(() => {
+    let base = [];
+    if (dataType === 'waf' && data && Array.isArray(data.Rules)) {
+      base = data.Rules;
+    } else if (dataType === 'alb' && data && Array.isArray(data.Rules)) {
+      base = data.Rules;
+    }
+    if (nameFilter !== '*') {
+      base = base.filter(r => {
+        const n = r.Name || r.name || r.Id || r.id || '';
+        return n.startsWith(nameFilter);
+      });
+    }
+    if (actionFilter !== '*') {
+      base = base.filter(r => {
+        if (r.Action && Object.keys(r.Action)[0] === actionFilter) return true;
+        if (r.Actions && Array.isArray(r.Actions) && r.Actions[0]?.Type === actionFilter) return true;
+        if (r.action === actionFilter) return true;
+        return false;
+      });
+    }
+    return base;
+  }, [dataType, data, nameFilter, actionFilter]);
+
   // Transform data for visualization
   const wafTransformed = useMemo(() => {
-    if (dataType === 'waf' && data && Array.isArray(data.Rules)) {
-      // Use RuleTransformer or NodeTransformer as needed
-      const transformer = new RuleTransformer(data.Rules);
+    if (dataType === 'waf' && filteredRules.length > 0) {
+      const transformer = new RuleTransformer(filteredRules);
       return transformer.transformRules();
     }
     return null;
-  }, [data, dataType]);
+  }, [dataType, filteredRules]);
 
   // ALB transformation using AlbRuleTransformer
   const albTransformed = useMemo(() => {
-    if (dataType === 'alb' && data && Array.isArray(data.Rules)) {
-      const transformer = new AlbRuleTransformer(data.Rules);
+    if (dataType === 'alb' && filteredRules.length > 0) {
+      const transformer = new AlbRuleTransformer(filteredRules);
       return transformer.transformRules();
     }
     return null;
-  }, [data, dataType]);
+  }, [dataType, filteredRules]);
 
   // Handler for node/rule selection
   const handleNodeSelect = (nodeId) => {

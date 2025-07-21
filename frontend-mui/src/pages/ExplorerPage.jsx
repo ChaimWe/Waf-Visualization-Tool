@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { Box, useTheme, Stack, Button, Drawer, ToggleButton, ToggleButtonGroup, Paper, Typography } from '@mui/material';
+import { Box, useTheme, Stack, Button, Drawer, ToggleButton, ToggleButtonGroup, Paper, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import Topbar from '../components/Topbar';
 import { useDataSource } from '../context/DataSourceContext';
 import FlowChart from '../components/tree/FlowChart';
@@ -52,6 +52,8 @@ export default function ExplorerPage() {
   const [ruleSet, setRuleSet] = useState('acl'); // 'acl', 'alb', or 'waf'
   const [nodesPerRow, setNodesPerRow] = useState(8);
   const [orderBy, setOrderBy] = useState('dependency');
+  const [nameFilter, setNameFilter] = useState('*');
+  const [actionFilter, setActionFilter] = useState('*');
 
   // Select rules based on ruleSet
   const rules = useMemo(() => {
@@ -61,11 +63,59 @@ export default function ExplorerPage() {
     return [];
   }, [ruleSet, aclData, albData]);
 
+  // Compute available name filter options (A-Z, 0-9, *) from current rules, case sensitive
+  const nameFilterOptions = useMemo(() => {
+    const allNames = (ruleSet === 'waf'
+      ? [...(aclData?.Rules || []), ...(albData?.Rules || [])]
+      : rules
+    ).map(r => r.Name || r.name || r.Id || r.id || '');
+    const initials = Array.from(new Set(allNames.map(n => n[0]).filter(Boolean)));
+    initials.sort();
+    return ['*', ...initials];
+  }, [ruleSet, aclData, albData, rules]);
+
+  // Compute available action filter options from current rules, case sensitive
+  const actionFilterOptions = useMemo(() => {
+    const allActions = (ruleSet === 'waf'
+      ? [...(aclData?.Rules || []), ...(albData?.Rules || [])]
+      : rules
+    ).map(r => {
+      if (r.Action) return Object.keys(r.Action)[0];
+      if (r.Actions && Array.isArray(r.Actions)) return r.Actions[0]?.Type;
+      return r.action || '';
+    }).filter(Boolean);
+    const unique = Array.from(new Set(allActions));
+    unique.sort();
+    return ['*', ...unique];
+  }, [ruleSet, aclData, albData, rules]);
+
+  // Filter rules according to filters
+  const filteredRules = useMemo(() => {
+    let base = ruleSet === 'waf'
+      ? [...(aclData?.Rules || []), ...(albData?.Rules || [])]
+      : rules;
+    if (nameFilter !== '*') {
+      base = base.filter(r => {
+        const n = r.Name || r.name || r.Id || r.id || '';
+        return n.startsWith(nameFilter);
+      });
+    }
+    if (actionFilter !== '*') {
+      base = base.filter(r => {
+        if (r.Action && Object.keys(r.Action)[0] === actionFilter) return true;
+        if (r.Actions && Array.isArray(r.Actions) && r.Actions[0]?.Type === actionFilter) return true;
+        if (r.action === actionFilter) return true;
+        return false;
+      });
+    }
+    return base;
+  }, [ruleSet, aclData, albData, rules, nameFilter, actionFilter]);
+
   // Use RuleTransformer to process rules into nodes/edges
   const transformed = useMemo(() => {
     if (ruleSet === 'waf') {
-      const aclRules = aclData?.Rules || [];
-      const albRules = albData?.Rules || [];
+      const aclRules = filteredRules.filter(r => (aclData?.Rules || []).includes(r));
+      const albRules = filteredRules.filter(r => (albData?.Rules || []).includes(r));
       const transformer = new WafInterlinkedTransformer(aclRules, albRules);
       const result = transformer.transformRules() || { nodes: [], edges: [] };
       // Debug logging
@@ -75,17 +125,17 @@ export default function ExplorerPage() {
       console.log('[COMBINED-WAF] Interlinked edges:', result.edges);
       return result;
     }
-    if (!rules.length) return { nodes: [], edges: [] };
+    if (!filteredRules.length) return { nodes: [], edges: [] };
     if (ruleSet === 'acl') {
-      const transformer = new RuleTransformer(rules);
+      const transformer = new RuleTransformer(filteredRules);
       return transformer.transformRules() || { nodes: [], edges: [] };
     }
     if (ruleSet === 'alb') {
-      const transformer = new AlbRuleTransformer(rules);
+      const transformer = new AlbRuleTransformer(filteredRules);
       return transformer.transformRules() || { nodes: [], edges: [] };
     }
     return { nodes: [], edges: [] };
-  }, [rules, ruleSet, aclData, albData]);
+  }, [filteredRules, ruleSet, aclData, albData]);
 
   // Handler for node selection in tree mode
   const handleNodeSelect = (nodeId) => {
@@ -136,6 +186,7 @@ export default function ExplorerPage() {
         albData={albData}
         setAclData={setAclData}
         setAlbData={setAlbData}
+        // REMOVE filter props from Topbar
       />
 <Paper
   elevation={2}
@@ -145,8 +196,8 @@ export default function ExplorerPage() {
     px: 2,
     py: 1,
     my: 2,
-    maxWidth: 'fit-content', // לא ייקח את כל הרוחב
-    mx: 'auto', // ממרכז את ה-Paper עצמו
+    maxWidth: 'fit-content',
+    mx: 'auto',
     boxShadow: 2,
   }}
 >
@@ -154,10 +205,43 @@ export default function ExplorerPage() {
     direction={{ xs: 'column', md: 'row' }}
     spacing={0.5}
     alignItems="center"
-    justifyContent="center" // ממרכז את הכפתורים בתוך ה-Stack
+    justifyContent="center"
     flexWrap="wrap"
     sx={{ gap: 0.5 }}
   >
+    {/* Name Filter Dropdown */}
+    <FormControl size="small" sx={{ minWidth: 90 }}>
+      <InputLabel id="name-filter-label">Name</InputLabel>
+      <Select
+        labelId="name-filter-label"
+        id="name-filter"
+        value={nameFilter}
+        label="Name"
+        onChange={e => setNameFilter(e.target.value)}
+        autoWidth
+      >
+        {(nameFilterOptions || []).map(opt => (
+          <MenuItem key={opt} value={opt}>{opt === '*' ? 'All' : opt}</MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+    {/* Action Filter Dropdown */}
+    <FormControl size="small" sx={{ minWidth: 110 }}>
+      <InputLabel id="action-filter-label">Action</InputLabel>
+      <Select
+        labelId="action-filter-label"
+        id="action-filter"
+        value={actionFilter}
+        label="Action"
+        onChange={e => setActionFilter(e.target.value)}
+        autoWidth
+      >
+        {(actionFilterOptions || []).map(opt => (
+          <MenuItem key={opt} value={opt}>{opt === '*' ? 'All' : opt}</MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+    {/* Existing ToggleButtonGroups follow here */}
     <ToggleButtonGroup
       value={ruleSet}
       exclusive
@@ -287,6 +371,7 @@ export default function ExplorerPage() {
               setSelectedNode={handleNodeSelect}
               nodesPerRow={nodesPerRow}
               orderBy={orderBy}
+              viewName={ruleSet === 'acl' ? 'CDN-WAF' : ruleSet === 'alb' ? 'WAF-ALB' : ruleSet === 'waf' ? 'COMBINED-WAF' : ''}
             />
           ) : (
             <Box sx={{ width: '100%', height: '100%', flex: 1, minHeight: 0, minWidth: 0, overflow: 'auto' }}>

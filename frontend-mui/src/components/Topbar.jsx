@@ -20,6 +20,9 @@ import Avatar from '@mui/material/Avatar';
 import UploadIcon from '@mui/icons-material/Upload';
 import { useDataSource } from '../context/DataSourceContext';
 import Chip from '@mui/material/Chip';
+import Select from '@mui/material/Select';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
 
 export default function Topbar({ title = 'WAF Visualization Tool', aclData, albData, setAclData, setAlbData, clearAclData, clearAlbData, onMenuClick }) {
   const theme = useTheme();
@@ -128,7 +131,7 @@ export default function Topbar({ title = 'WAF Visualization Tool', aclData, albD
             </IconButton>
           )}
         </Box>
-        {/* Center: Upload and delete controls */}
+        {/* Center: Filters, Upload and delete controls */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, justifyContent: { xs: 'flex-end', sm: 'center' } }}>
           {/* Upload Data Dropdown */}
           <Button
@@ -174,8 +177,8 @@ export default function Topbar({ title = 'WAF Visualization Tool', aclData, albD
             style={{ display: 'none' }}
           />
           <Menu anchorEl={uploadMenuAnchor} open={uploadMenuOpen} onClose={handleUploadMenuClose}>
-            <MenuItem onClick={handleAclUploadClick}>ACL-WAF JSON</MenuItem>
-            <MenuItem onClick={handleAlbUploadClick}>ALB JSON</MenuItem>
+            <MenuItem onClick={handleAclUploadClick}>CDN-WAF JSON</MenuItem>
+            <MenuItem onClick={handleAlbUploadClick}>WAF-ALBJSON</MenuItem>
           </Menu>
           {/* Delete buttons for WAF/ALB */}
           {aclData && (

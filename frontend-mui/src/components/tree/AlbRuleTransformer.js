@@ -83,6 +83,7 @@ export default class AlbRuleTransformer {
           priority: rule.Priority || rule.priority || idx + 1,
           action: rule.Actions ? (rule.Actions[0]?.Type || 'Unknown') : (rule.action || ''),
           borderColor: 'orange',
+          metric: rule.VisibilityConfig?.MetricName || ''
         },
         style: this.getNodeStyle(rule),
       };

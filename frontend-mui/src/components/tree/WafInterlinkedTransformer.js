@@ -19,44 +19,55 @@ export default class WafInterlinkedTransformer {
     return headers;
   }
 
-  transformRules() {
+  transformRules(nodesPerRow = 8) {
     // Layout params matching FlowChart hierarchicalLayout
     const rowGap = 120;
     const groupGap = 180;
-    const nodesPerRow = 8; // match default in FlowChart
+    // Use the parameter instead of hardcoded value
+    // const nodesPerRow = 8; // match default in FlowChart
     const aclRows = Math.ceil(this.aclRules.length / nodesPerRow);
     const albY = aclRows * rowGap + groupGap;
 
     // Create nodes for ACL rules (top group)
-    const aclNodes = this.aclRules.map((rule, idx) => ({
-      id: 'acl-' + (rule.Name || rule.name || rule.Id || String(idx)),
-      type: 'custom-node',
-      position: { x: idx * 200, y: 0 },
-      data: {
-        ...rule,
-        nodeType: 'acl',
-        viewType: 'waf',
-        name: rule.Name || rule.name || rule.Id || `ACL Rule ${idx + 1}`,
-        priority: rule.Priority || rule.priority || idx + 1,
-        action: rule.Action ? Object.keys(rule.Action)[0] : (rule.action || ''),
-        borderColor: '#e75480',
-      },
-    }));
+    const aclNodes = this.aclRules.map((rule, idx) => {
+      const row = Math.floor(idx / nodesPerRow);
+      const col = idx % nodesPerRow;
+      return {
+        id: 'acl-' + (rule.Name || rule.name || rule.Id || String(idx)),
+        type: 'custom-node',
+        position: { x: col * 200, y: row * rowGap },
+        data: {
+          ...rule,
+          nodeType: 'acl',
+          viewType: 'waf',
+          name: rule.Name || rule.name || rule.Id || `ACL Rule ${idx + 1}`,
+          priority: rule.Priority || rule.priority || idx + 1,
+          action: rule.Action ? Object.keys(rule.Action)[0] : (rule.action || ''),
+          borderColor: '#e75480',
+          metric: rule.VisibilityConfig?.MetricName || ''
+        },
+      };
+    });
     // Create nodes for ALB rules (bottom group, y-offset)
-    const albNodes = this.albRules.map((rule, idx) => ({
-      id: 'alb-' + (rule.Name || rule.name || rule.Id || String(idx)),
-      type: 'custom-node',
-      position: { x: idx * 200, y: albY },
-      data: {
-        ...rule,
-        nodeType: 'alb',
-        viewType: 'waf',
-        name: rule.Name || rule.name || rule.Id || `ALB Rule ${idx + 1}`,
-        priority: rule.Priority || rule.priority || idx + 1,
-        action: rule.Actions ? (rule.Actions[0]?.Type || 'Unknown') : (rule.action || ''),
-        borderColor: 'orange',
-      },
-    }));
+    const albNodes = this.albRules.map((rule, idx) => {
+      const row = Math.floor(idx / nodesPerRow);
+      const col = idx % nodesPerRow;
+      return {
+        id: 'alb-' + (rule.Name || rule.name || rule.Id || String(idx)),
+        type: 'custom-node',
+        position: { x: col * 200, y: albY + row * rowGap },
+        data: {
+          ...rule,
+          nodeType: 'alb',
+          viewType: 'waf',
+          name: rule.Name || rule.name || rule.Id || `ALB Rule ${idx + 1}`,
+          priority: rule.Priority || rule.priority || idx + 1,
+          action: rule.Actions ? (rule.Actions[0]?.Type || 'Unknown') : (rule.action || ''),
+          borderColor: 'orange',
+          metric: rule.VisibilityConfig?.MetricName || ''
+        },
+      };
+    });
 
     // --- Header-based edge logic ---
     // 1. Find headers modified by ACL rules (robust, recursive, case-insensitive)

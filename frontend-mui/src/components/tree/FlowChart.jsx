@@ -14,6 +14,7 @@ import { Box, IconButton, Tooltip, Button, Typography } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
+import PropTypes from 'prop-types';
 
 // Move nodeTypes and edgeTypes outside the component to avoid React Flow warning
 const nodeTypes = { 'custom-node': CustomNode };
@@ -118,6 +119,7 @@ const FlowChartInner = forwardRef(({
     nodesPerRow,
     orderBy,
     albMode, // Added albMode prop
+    viewName,
 }, ref) => {
     const [hoveredNode, setHoveredNode] = useState(null);
     const [showHelp, setShowHelp] = useState(false);
@@ -570,31 +572,64 @@ const FlowChartInner = forwardRef(({
                         minWidth: 320,
                         maxWidth: 480,
                     }}>
+                        {viewName && (
+                          <Typography variant="subtitle1" sx={{ mb: 1, color: '#1976d2', fontWeight: 700 }}>
+                            Current View: {viewName}
+                          </Typography>
+                        )}
                         <Typography variant="h6" sx={{ mb: 1 }}>How to Read This View</Typography>
                         <Typography variant="body2" sx={{ mb: 2 }}>
-                          {/* Combined WAF (Interlinked) legend (shown if not albMode) */}
-                          {albMode || (Array.isArray(allNodes) && allNodes.some(n => n.style && n.style.background === '#81c784')) ? (
+                          {/* Show legend based on ruleSet or node types */}
+                          {albMode ? (
                             <>
-                              <b>ALB WAF Node Colors:</b><br/>
-                              <span style={{ background: '#81c784', border: '2px solid #388e3c', padding: '2px 8px', borderRadius: 4, marginRight: 6 }}>Light Green</span>: ALB WAF Rule<br/>
+                              <b>ALB Node Colors:</b><br/>
+                              <span style={{ background: '#81c784', border: '2px solid #388e3c', padding: '2px 8px', borderRadius: 4, marginRight: 6 }}>Light Green</span>: ALB Rule<br/>
                               <span style={{ background: '#a5d6a7', color: '#388e3c', fontStyle: 'italic', padding: '2px 8px', borderRadius: 4, marginRight: 6 }}>Pale Green Italic</span>: Condition/Field Match<br/>
                               <span style={{ border: '2px solid #e53935', background: '#fff', color: '#e53935', padding: '2px 8px', borderRadius: 4, marginRight: 6 }}>Red Border</span>: Block Action<br/>
                               <span style={{ background: '#fff9c4', color: '#888', padding: '2px 8px', borderRadius: 4, marginRight: 6 }}>Light Yellow</span>: Allow/Count Action<br/>
-                              <span style={{ color: '#43a047', fontWeight: 600 }}>Green Edge</span>: ALB Logic<br/>
-                              <span style={{ color: '#ffa726', fontWeight: 600 }}>Orange Edge</span>: Cross-layer (future)<br/>
                               <br/>
                               <b>Action Indicators:</b><br/>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                <div style={{ width: 16, height: 6, backgroundColor: '#0072b2', borderRadius: 3, border: '1px solid #0072b2' }}></div>
+                                <div style={{ width: 22, height: 8, backgroundColor: '#43a047', borderRadius: 3, border: '1px solid #388e3c' }}></div>
                                 <span>Allow</span>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                <div style={{ width: 16, height: 6, backgroundColor: '#dc143c', borderRadius: 3, border: '1px solid #dc143c' }}></div>
+                                <div style={{ width: 22, height: 8, backgroundColor: '#d32f2f', borderRadius: 3, border: '1px solid #b71c1c' }}></div>
                                 <span>Block</span>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                <div style={{ width: 16, height: 6, backgroundColor: '#faa500', borderRadius: 3, border: '1px solid #faa500' }}></div>
+                                <div style={{ width: 22, height: 8, backgroundColor: '#faa500', borderRadius: 3, border: '1px solid #faa500' }}></div>
                                 <span>Count</span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <div style={{ width: 22, height: 8, backgroundColor: '#bdbdbd', borderRadius: 3, border: '1px solid #888' }}></div>
+                                <span>Other</span>
+                              </div>
+                              <br/>
+                              Click any node to see details and relationships in the inspector.<br/>
+                            </>
+                          ) : Array.isArray(allNodes) && allNodes.some(n => n.data && (n.data.nodeType === 'acl' || n.data.borderColor === '#e75480')) ? (
+                            <>
+                              <b>ACL Node Colors:</b><br/>
+                              <span style={{ background: '#1976d2', border: '2px solid #1565c0', padding: '2px 8px', borderRadius: 4, marginRight: 6, color: '#fff' }}>Blue</span>: ACL Rule<br/>
+                              <span style={{ color: '#e75480', fontWeight: 600, border: '2px solid #e75480', padding: '0 4px', borderRadius: 3 }}>Pink border</span>: Label-emitting rules<br/>
+                              <br/>
+                              <b>Action Indicators:</b><br/>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <div style={{ width: 22, height: 8, backgroundColor: '#43a047', borderRadius: 3, border: '1px solid #388e3c' }}></div>
+                                <span>Allow</span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <div style={{ width: 22, height: 8, backgroundColor: '#d32f2f', borderRadius: 3, border: '1px solid #b71c1c' }}></div>
+                                <span>Block</span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <div style={{ width: 22, height: 8, backgroundColor: '#faa500', borderRadius: 3, border: '1px solid #faa500' }}></div>
+                                <span>Count</span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <div style={{ width: 22, height: 8, backgroundColor: '#bdbdbd', borderRadius: 3, border: '1px solid #888' }}></div>
+                                <span>Other</span>
                               </div>
                               <br/>
                               Click any node to see details and relationships in the inspector.<br/>
@@ -610,16 +645,20 @@ const FlowChartInner = forwardRef(({
                               <br/>
                               <b>Action Indicators:</b><br/>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                <div style={{ width: 16, height: 6, backgroundColor: '#0072b2', borderRadius: 3, border: '1px solid #0072b2' }}></div>
+                                <div style={{ width: 22, height: 8, backgroundColor: '#43a047', borderRadius: 3, border: '1px solid #388e3c' }}></div>
                                 <span>Allow</span>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                <div style={{ width: 16, height: 6, backgroundColor: '#dc143c', borderRadius: 3, border: '1px solid #dc143c' }}></div>
+                                <div style={{ width: 22, height: 8, backgroundColor: '#d32f2f', borderRadius: 3, border: '1px solid #b71c1c' }}></div>
                                 <span>Block</span>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                <div style={{ width: 16, height: 6, backgroundColor: '#faa500', borderRadius: 3, border: '1px solid #faa500' }}></div>
+                                <div style={{ width: 22, height: 8, backgroundColor: '#faa500', borderRadius: 3, border: '1px solid #faa500' }}></div>
                                 <span>Count</span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <div style={{ width: 22, height: 8, backgroundColor: '#bdbdbd', borderRadius: 3, border: '1px solid #888' }}></div>
+                                <span>Other</span>
                               </div>
                               <br/>
                               <b>Edges:</b> Show label-based dependencies between rules.<br/>
@@ -672,6 +711,19 @@ const FlowChartInner = forwardRef(({
         </Box>
     );
 });
+
+FlowChartInner.propTypes = {
+  allNodes: PropTypes.arrayOf(PropTypes.object).isRequired,
+  allEdges: PropTypes.arrayOf(PropTypes.object).isRequired,
+  selectedNode: PropTypes.string,
+  setSelectedNode: PropTypes.func.isRequired,
+  searchTerm: PropTypes.string,
+  showArrows: PropTypes.bool,
+  nodesPerRow: PropTypes.number,
+  orderBy: PropTypes.oneOf(['number', 'dependency']),
+  albMode: PropTypes.bool,
+  viewName: PropTypes.string,
+};
 
 const FlowChart = React.memo(React.forwardRef((props, ref) => (
     <ReactFlowProvider>

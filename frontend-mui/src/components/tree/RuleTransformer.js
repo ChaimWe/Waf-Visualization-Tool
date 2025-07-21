@@ -30,12 +30,17 @@ export default class RuleTransformer {
           id: nodeId,
           name: rule.Name,
           priority: rule.Priority,
-          action: rule.Action ? Object.keys(rule.Action)[0] : Object.keys(rule.OverrideAction)[0],
+          action: rule.Action
+            ? Object.keys(rule.Action)[0]
+            : (rule.OverrideAction ? Object.keys(rule.OverrideAction)[0] : undefined),
           ruleLabels: rule.RuleLabels?.map(label => label.Name) || [],
           insertHeaders: rule.Action?.Count?.CustomRequestHandling?.InsertHeaders?.map(h => { return { name: h.Name, value: h.Value } }) || [],
           labelState: [...labelState, ...labelScopeDown],
           level: this.level,
-          warnings: [...this.warnings]
+          warnings: [...this.warnings],
+          metric: rule.VisibilityConfig?.MetricName || '',
+          nodeType: 'acl',
+          viewType: 'cdn-waf'
         };
         newRules.push(transformedRule);
       });
