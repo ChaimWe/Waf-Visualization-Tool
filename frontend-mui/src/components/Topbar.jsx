@@ -245,8 +245,20 @@ export default function Topbar({ title = 'WAF Visualization Tool', aclData, albD
                 <Typography variant="h6" sx={{ mb: 2 }}>Delete {deleteType === 'acl' ? 'WAF' : 'ALB'} file?</Typography>
                 <Typography variant="body2" sx={{ mb: 3 }}>Are you sure you want to delete this file? This action cannot be undone.</Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                  <Button onClick={handleCancelDelete} variant="outlined">Cancel</Button>
-                  <Button onClick={handleConfirmDelete} variant="contained" color="error">Delete</Button>
+                  <Button 
+                    onClick={handleCancelDelete} 
+                    variant="outlined" 
+                    autoFocus // Add autoFocus to ensure Cancel gets focus first
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleConfirmDelete} 
+                    variant="contained" 
+                    color="error"
+                  >
+                    Delete
+                  </Button>
                 </Box>
               </Box>
             </Box>

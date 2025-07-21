@@ -509,7 +509,7 @@ const FlowChartInner = forwardRef(({
       // Default style
       let opacity = 0.5;
       let strokeWidth = 3;
-      let stroke = '#1976d2';
+      let stroke = '#6a5acd';
       let strokeDasharray = undefined;
       // Use edge.style if provided (from AlbAclPage)
       if (edge.style) {
@@ -583,15 +583,44 @@ const FlowChartInner = forwardRef(({
                               <span style={{ color: '#43a047', fontWeight: 600 }}>Green Edge</span>: ALB Logic<br/>
                               <span style={{ color: '#ffa726', fontWeight: 600 }}>Orange Edge</span>: Cross-layer (future)<br/>
                               <br/>
+                              <b>Action Indicators:</b><br/>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <div style={{ width: 16, height: 6, backgroundColor: '#0072b2', borderRadius: 3, border: '1px solid #0072b2' }}></div>
+                                <span>Allow</span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <div style={{ width: 16, height: 6, backgroundColor: '#dc143c', borderRadius: 3, border: '1px solid #dc143c' }}></div>
+                                <span>Block</span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <div style={{ width: 16, height: 6, backgroundColor: '#faa500', borderRadius: 3, border: '1px solid #faa500' }}></div>
+                                <span>Count</span>
+                              </div>
+                              <br/>
                               Click any node to see details and relationships in the inspector.<br/>
                             </>
                           ) : (
                             <>
                               <b>Combined WAF (Interlinked) Node Colors:</b><br/>
-                              <span style={{ color: '#1976d2', fontWeight: 600 }}>Blue</span>: ACL rules (label logic)<br/>
-                              <span style={{ color: '#43a047', fontWeight: 600 }}>Green</span>: ALB rules<br/>
-                              <span style={{ color: '#d32f2f', fontWeight: 600 }}>Red</span>: Blocked action nodes/edges<br/>
+                              <span style={{ color: '#319177', fontWeight: 600 }}>Green</span>: Parent nodes<br/>
+                              <span style={{ color: '#007fff', fontWeight: 600 }}>Blue</span>: Child nodes<br/>
+                              <span style={{ color: '#7851a9', fontWeight: 600 }}>Purple</span>: Parent & Child nodes<br/>
+                              <span style={{ color: '#757575', fontWeight: 600 }}>Gray</span>: Other nodes<br/>
                               <span style={{ color: '#e75480', fontWeight: 600, border: '2px solid #e75480', padding: '0 4px', borderRadius: 3 }}>Pink border</span>: Label-emitting rules<br/>
+                              <br/>
+                              <b>Action Indicators:</b><br/>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <div style={{ width: 16, height: 6, backgroundColor: '#0072b2', borderRadius: 3, border: '1px solid #0072b2' }}></div>
+                                <span>Allow</span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <div style={{ width: 16, height: 6, backgroundColor: '#dc143c', borderRadius: 3, border: '1px solid #dc143c' }}></div>
+                                <span>Block</span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <div style={{ width: 16, height: 6, backgroundColor: '#faa500', borderRadius: 3, border: '1px solid #faa500' }}></div>
+                                <span>Count</span>
+                              </div>
                               <br/>
                               <b>Edges:</b> Show label-based dependencies between rules.<br/>
                               Click any node to see details and relationships in the inspector.<br/>
@@ -627,7 +656,7 @@ const FlowChartInner = forwardRef(({
                     defaultViewport={{ zoom: 0.8 }}
                     style={flowStyles}
                     defaultEdgeOptions={{
-                        style: { stroke: '#1976d2', strokeWidth: 3, opacity: 0.5 },
+                        style: { stroke: '#6a5acd', strokeWidth: 3, opacity: 0.5 },
                     }}
                 >
                     {/* Background removed for plain/transparent look */}

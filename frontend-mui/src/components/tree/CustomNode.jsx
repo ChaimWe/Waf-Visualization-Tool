@@ -104,14 +104,14 @@ const getNodeStyle = (action, diameter, isParent, isChild, darkTheme, isFaded, n
     };
     // Original background and border logic
     if (isParent && !isChild) {
-        nodeStyle.background = darkTheme ? '#1976d2' : '#1976d2'; // blue
-        nodeStyle.border = `3px solid ${darkTheme ? '#2196f3' : '#2196f3'}`;
+        nodeStyle.background = darkTheme ? '#319177' : '#319177'; // blue
+        nodeStyle.border = `3px solid ${darkTheme ? '#319177' : '#319177'}`;
     } else if (!isParent && isChild) {
-        nodeStyle.background = darkTheme ? '#43a047' : '#43a047'; // green
-        nodeStyle.border = `3px solid ${darkTheme ? '#66bb6a' : '#66bb6a'}`;
+        nodeStyle.background = darkTheme ? '#007fff' : '#007fff'; // green
+        nodeStyle.border = `3px solid ${darkTheme ? '#007fff' : '#007fff'}`;
     } else if (isParent && isChild) {
-        nodeStyle.background = darkTheme ? '#00897b' : '#00897b'; // teal
-        nodeStyle.border = `3px solid ${darkTheme ? '#26a69a' : '#26a69a'}`;
+        nodeStyle.background = darkTheme ? '#7851a9' : '#7851a9'; // light sea green
+        nodeStyle.border = `3px solid ${darkTheme ? '#7851a9' : '#7851a9'}`;
     } else {
         nodeStyle.background = darkTheme ? '#757575' : '#bdbdbd'; // gray
         nodeStyle.border = `3px solid ${darkTheme ? '#bdbdbd' : '#757575'}`;
@@ -176,6 +176,26 @@ export default function CustomNode({ data, id, selected, isFaded }) {
             <Tooltip title={iconTooltip} arrow>
                 <span>{icon}</span>
             </Tooltip>
+            {/* Action indicator - tiny round-edged rectangle under the arrow symbol */}
+            {data.action && (
+                <div style={{
+                    position: 'absolute',
+                    top: 35,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: 16,
+                    height: 6,
+                    backgroundColor: data.action.toLowerCase() === 'allow' ? '#0072b2' : 
+                                   data.action.toLowerCase() === 'block' ? '#dc143c' :
+                                   data.action.toLowerCase() === 'count' ? '#faa500' : '#ff6b6b',
+                    borderRadius: 3,
+                    border: `1px solid ${data.action.toLowerCase() === 'allow' ? '#0072b2' : 
+                                       data.action.toLowerCase() === 'block' ? '#dc143c' :
+                                       data.action.toLowerCase() === 'count' ? '#faa500' : '#ff6b6b'}`,
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                    zIndex: 10
+                }} />
+            )}
             {/* When rendering label/header names inside nodes, use the color and bold style as described above. */}
             <Tooltip title={data.Name || data.name} arrow>
                 <div style={{ fontWeight: 'bold', fontSize: 18, textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', color: '#fff', textShadow: darkTheme ? '0 1px 2px rgba(0,0,0,0.5)' : 'none', marginTop: 4 }}>{data.Name || data.name}</div>

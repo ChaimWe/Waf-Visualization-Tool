@@ -549,8 +549,8 @@ const RequestDebugger = () => {
                     <FormControl size="small">
                         <InputLabel>Mode</InputLabel>
                         <Select value={mode} label="Mode" onChange={e => setMode(e.target.value)}>
-                            <MenuItem value="waf" disabled={!aclLoaded}>WAF/ACL</MenuItem>
-                            <MenuItem value="alb" disabled={!albLoaded}>ALB</MenuItem>
+                            <MenuItem value="waf" disabled={!aclLoaded}>CDN-WAF</MenuItem>
+                            <MenuItem value="alb" disabled={!albLoaded}>WAF-ALB</MenuItem>
                             <MenuItem value="both" disabled={!(aclLoaded || albLoaded)}>Both</MenuItem>
                         </Select>
                     </FormControl>
@@ -863,7 +863,7 @@ const RequestDebugger = () => {
                                 </Alert>
                             ) : matchedRules.length > 0 ? (
                                 <Alert severity="success" sx={{ mb: 2 }}>
-                                    <Typography variant="h6">Request Would Be ALLOWED</Typography>
+                                    <Typography variant="h6">Request Would Be PASSED</Typography>
                                     <Typography>
                                         {matchedRules.length} rule(s) matched, but none would block the request.
                                     </Typography>

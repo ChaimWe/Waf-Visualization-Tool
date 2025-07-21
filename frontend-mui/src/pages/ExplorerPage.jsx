@@ -67,7 +67,13 @@ export default function ExplorerPage() {
       const aclRules = aclData?.Rules || [];
       const albRules = albData?.Rules || [];
       const transformer = new WafInterlinkedTransformer(aclRules, albRules);
-      return transformer.transformRules() || { nodes: [], edges: [] };
+      const result = transformer.transformRules() || { nodes: [], edges: [] };
+      // Debug logging
+      console.log('[COMBINED-WAF] ACL Rules:', aclRules);
+      console.log('[COMBINED-WAF] ALB Rules:', albRules);
+      console.log('[COMBINED-WAF] Interlinked nodes:', result.nodes);
+      console.log('[COMBINED-WAF] Interlinked edges:', result.edges);
+      return result;
     }
     if (!rules.length) return { nodes: [], edges: [] };
     if (ruleSet === 'acl') {

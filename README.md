@@ -1,11 +1,14 @@
 # WAF Visualization & AI Assistant
 
 ## 1. Project Overview
-A modern, interactive tool for visualizing, debugging, and optimizing AWS WAF (Web Application Firewall) and ALB (Application Load Balancer) rules. Built with React (frontend) and Express (backend), it empowers security engineers and DevOps teams to:
-- Visualize complex WAF/ALB rule relationships as interactive graphs
-- Debug and test rules against real requests
-- Gain AI-powered insights and recommendations
-- Connect to AWS for live data or upload JSON exports
+A modern, interactive tool for visualizing, debugging, and exploring AWS WAF (Web Application Firewall) and ALB (Application Load Balancer) rules. Built with React (frontend) and Express (backend), it empowers security engineers and DevOps teams to:
+
+- Visualize rule relationships and dependencies
+- Inspect and debug rules interactively
+- Test rule behavior with real or sample requests
+- Get AI-powered explanations and insights
+
+**Note:** This tool does not automatically optimize or rewrite your rules. Optimization decisions are left to the user, based on the insights and visualizations provided.
 
 ## 2. Features
 - Interactive WAF/ALB Rule Visualization
