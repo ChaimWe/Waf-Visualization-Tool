@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
     Box,
     Button,
@@ -58,8 +58,11 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import CloudIcon from '@mui/icons-material/Cloud';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { useDataSource } from '../context/DataSourceContext';
 import { useAWSCredentials } from '../context/AWSCredentialsContext';
+import RuleDetailsPopup from '../components/WAFView/RuleDetailsPopup';
 
 // Attack Payload Libraries
 const ATTACK_PAYLOADS = {
@@ -105,7 +108,6 @@ const ATTACK_PAYLOADS = {
         "....//....//....//etc/passwd",
         "..%2F..%2F..%2Fetc%2Fpasswd",
         "..%252F..%252F..%252Fetc%252Fpasswd",
-        "..%c0%af..%c0%af..%c0%afetc%c0%afpasswd",
         "..%255c..%255c..%255cwindows%255csystem32%255cdrivers%255cetc%255chosts"
     ],
     'LDAP Injection': [
@@ -228,6 +230,126 @@ const evaluateWafRule = (rule, request) => {
             }
         }
 
+        // SqliMatchStatement evaluation
+        else if (statement.SqliMatchStatement) {
+            const sms = statement.SqliMatchStatement;
+            const fieldToMatch = sms.FieldToMatch;
+            let valueToCheck = '';
+            if (fieldToMatch.UriPath) {
+                valueToCheck = request.path;
+            } else if (fieldToMatch.QueryString) {
+                valueToCheck = request.queryParams;
+            } else if (fieldToMatch.SingleHeader) {
+                const headerName = fieldToMatch.SingleHeader.Name;
+                const header = request.headers.find(h => h.name.toLowerCase() === headerName.toLowerCase());
+                valueToCheck = header ? header.value : '';
+            } else if (fieldToMatch.Body) {
+                valueToCheck = request.body;
+            }
+            // Simulate SQLi detection (very basic)
+            const matched = ATTACK_PAYLOADS['SQL Injection'].some(payload => valueToCheck.includes(payload));
+            result.matched = matched;
+            result.reason = matched ? 'Potential SQL Injection detected' : 'No SQLi pattern detected';
+            result.details.push({
+                field: fieldToMatch.UriPath ? 'URI Path' : fieldToMatch.QueryString ? 'Query String' : fieldToMatch.SingleHeader ? 'Header' : 'Body',
+                value: valueToCheck,
+                matched
+            });
+            result.riskLevel = matched ? 'critical' : 'low';
+        }
+
+        // XssMatchStatement evaluation
+        else if (statement.XssMatchStatement) {
+            const xms = statement.XssMatchStatement;
+            const fieldToMatch = xms.FieldToMatch;
+            let valueToCheck = '';
+            if (fieldToMatch.UriPath) {
+                valueToCheck = request.path;
+            } else if (fieldToMatch.QueryString) {
+                valueToCheck = request.queryParams;
+            } else if (fieldToMatch.SingleHeader) {
+                const headerName = fieldToMatch.SingleHeader.Name;
+                const header = request.headers.find(h => h.name.toLowerCase() === headerName.toLowerCase());
+                valueToCheck = header ? header.value : '';
+            } else if (fieldToMatch.Body) {
+                valueToCheck = request.body;
+            }
+            // Simulate XSS detection (very basic)
+            const matched = ATTACK_PAYLOADS['XSS (Cross-Site Scripting)'].some(payload => valueToCheck.includes(payload));
+            result.matched = matched;
+            result.reason = matched ? 'Potential XSS detected' : 'No XSS pattern detected';
+            result.details.push({
+                field: fieldToMatch.UriPath ? 'URI Path' : fieldToMatch.QueryString ? 'Query String' : fieldToMatch.SingleHeader ? 'Header' : 'Body',
+                value: valueToCheck,
+                matched
+            });
+            result.riskLevel = matched ? 'high' : 'low';
+        }
+
+        // SizeConstraintStatement evaluation
+        else if (statement.SizeConstraintStatement) {
+            const scs = statement.SizeConstraintStatement;
+            const fieldToMatch = scs.FieldToMatch;
+            let valueToCheck = '';
+            if (fieldToMatch.UriPath) {
+                valueToCheck = request.path;
+            } else if (fieldToMatch.QueryString) {
+                valueToCheck = request.queryParams;
+            } else if (fieldToMatch.SingleHeader) {
+                const headerName = fieldToMatch.SingleHeader.Name;
+                const header = request.headers.find(h => h.name.toLowerCase() === headerName.toLowerCase());
+                valueToCheck = header ? header.value : '';
+            } else if (fieldToMatch.Body) {
+                valueToCheck = request.body;
+            }
+            const size = valueToCheck.length;
+            let matched = false;
+            switch (scs.ComparisonOperator) {
+                case 'EQ': matched = size === scs.Size; break;
+                case 'NE': matched = size !== scs.Size; break;
+                case 'LT': matched = size < scs.Size; break;
+                case 'LE': matched = size <= scs.Size; break;
+                case 'GT': matched = size > scs.Size; break;
+                case 'GE': matched = size >= scs.Size; break;
+                default: break;
+            }
+            result.matched = matched;
+            result.reason = `Size constraint: ${size} ${scs.ComparisonOperator} ${scs.Size}`;
+            result.details.push({
+                field: fieldToMatch.UriPath ? 'URI Path' : fieldToMatch.QueryString ? 'Query String' : fieldToMatch.SingleHeader ? 'Header' : 'Body',
+                value: valueToCheck,
+                size,
+                matched
+            });
+        }
+
+        // AND statement
+        else if (statement.AndStatement) {
+            const statements = statement.AndStatement.Statements || [];
+            const subResults = statements.map(sub => evaluateWafRule({ Statement: sub }, request));
+            result.matched = subResults.every(r => r.matched);
+            result.reason = result.matched ? 'All AND sub-statements matched' : 'One or more AND sub-statements did not match';
+            result.details = subResults;
+        }
+
+        // OR statement
+        else if (statement.OrStatement) {
+            const statements = statement.OrStatement.Statements || [];
+            const subResults = statements.map(sub => evaluateWafRule({ Statement: sub }, request));
+            result.matched = subResults.some(r => r.matched);
+            result.reason = result.matched ? 'At least one OR sub-statement matched' : 'No OR sub-statements matched';
+            result.details = subResults;
+        }
+
+        // NOT statement
+        else if (statement.NotStatement) {
+            const sub = statement.NotStatement.Statement;
+            const subResult = evaluateWafRule({ Statement: sub }, request);
+            result.matched = !subResult.matched;
+            result.reason = result.matched ? 'NOT sub-statement did not match' : 'NOT sub-statement matched';
+            result.details = [subResult];
+        }
+
         // RateBasedStatement evaluation
         else if (statement.RateBasedStatement) {
             const rbs = statement.RateBasedStatement;
@@ -340,6 +462,49 @@ const evaluateAlbRule = (rule, request) => {
                     pattern: hostHeader,
                     matched: matches
                 };
+            } else if (condition.Field === 'http-header') {
+                // HTTP header match
+                const headerName = condition.HttpHeaderConfig?.HttpHeaderName || condition.Values[0];
+                const headerValue = condition.Values[1] || '';
+                const header = request.headers.find(h => h.name.toLowerCase() === headerName.toLowerCase());
+                const matches = header && header.value.includes(headerValue);
+                return {
+                    field: 'HTTP Header',
+                    value: header ? header.value : 'Not found',
+                    pattern: `${headerName}: ${headerValue}`,
+                    matched: matches
+                };
+            } else if (condition.Field === 'http-request-method') {
+                // HTTP method match
+                const method = condition.Values[0];
+                const matches = request.method.toUpperCase() === method.toUpperCase();
+                return {
+                    field: 'HTTP Method',
+                    value: request.method,
+                    pattern: method,
+                    matched: matches
+                };
+            } else if (condition.Field === 'query-string') {
+                // Query string match (simple substring)
+                const query = condition.Values[0];
+                const matches = request.queryParams.includes(query);
+                return {
+                    field: 'Query String',
+                    value: request.queryParams,
+                    pattern: query,
+                    matched: matches
+                };
+            } else if (condition.Field === 'source-ip') {
+                // Source IP match (X-Forwarded-For header)
+                const ip = condition.Values[0];
+                const header = request.headers.find(h => h.name.toLowerCase() === 'x-forwarded-for');
+                const matches = header && header.value === ip;
+                return {
+                    field: 'Source IP',
+                    value: header ? header.value : 'Not found',
+                    pattern: ip,
+                    matched: matches
+                };
             }
             return {
                 field: condition.Field,
@@ -361,6 +526,23 @@ const evaluateAlbRule = (rule, request) => {
     return result;
 };
 
+const TEST_CASES_STORAGE_KEY = 'waf-debugger-test-cases';
+
+const loadTestCasesFromStorage = () => {
+    try {
+        const data = localStorage.getItem(TEST_CASES_STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+    } catch {
+        return [];
+    }
+};
+
+const saveTestCasesToStorage = (testCases) => {
+    try {
+        localStorage.setItem(TEST_CASES_STORAGE_KEY, JSON.stringify(testCases));
+    } catch {}
+};
+
 const RequestDebugger = () => {
     const { aclData, albData } = useDataSource();
     const { isAuthenticated, getWAFClient, credentials } = useAWSCredentials();
@@ -378,13 +560,16 @@ const RequestDebugger = () => {
         body: 'username=admin&password=test123'
     });
     const [results, setResults] = useState(null);
-    const [stepMode, setStepMode] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
     const [activeTab, setActiveTab] = useState(0);
     const [isRunning, setIsRunning] = useState(false);
     const [payloadDialogOpen, setPayloadDialogOpen] = useState(false);
     const [ipDialogOpen, setIpDialogOpen] = useState(false);
-    const [testCases, setTestCases] = useState([]);
+    const [testCases, setTestCases] = useState(loadTestCasesFromStorage());
+    const [popupOpen, setPopupOpen] = useState(false);
+    const [selectedRule, setSelectedRule] = useState(null);
+    // Add AI summary state
+    const [aiSummary, setAiSummary] = useState('');
 
     const aclLoaded = !!aclData;
     const albLoaded = !!albData;
@@ -524,11 +709,39 @@ const RequestDebugger = () => {
             request: { ...request },
             timestamp: new Date().toISOString()
         };
-        setTestCases(prev => [...prev, testCase]);
+        const updated = [...testCases, testCase];
+        setTestCases(updated);
+        saveTestCasesToStorage(updated);
     };
 
     const loadTestCase = (testCase) => {
         setRequest(testCase.request);
+    };
+
+    const handleExportTestCases = () => {
+        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(testCases, null, 2));
+        const dlAnchor = document.createElement('a');
+        dlAnchor.setAttribute('href', dataStr);
+        dlAnchor.setAttribute('download', 'waf-debugger-test-cases.json');
+        document.body.appendChild(dlAnchor);
+        dlAnchor.click();
+        dlAnchor.remove();
+    };
+
+    const handleImportTestCases = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if (Array.isArray(imported)) {
+                    setTestCases(imported);
+                    saveTestCasesToStorage(imported);
+                }
+            } catch {}
+        };
+        reader.readAsText(file);
     };
 
     const getRiskLevelColor = (level) => {
@@ -539,6 +752,80 @@ const RequestDebugger = () => {
             default: return 'success';
         }
     };
+
+    // Helper to generate a local summary
+    const generateLocalSummary = (results, blockedRules, matchedRules) => {
+        if (!results || results.length === 0) return 'No rules were evaluated.';
+        if (blockedRules.length > 0) {
+            return `Key blocking rule: "${blockedRules[0]?.rule.Name || blockedRules[0]?.rule.name}" (priority ${blockedRules[0]?.priority}). Reason: ${blockedRules[0]?.reason}`;
+        } else if (matchedRules.length > 0) {
+            const ruleNames = matchedRules.map(r => r.rule.Name || r.rule.name).join(', ');
+            return `Matched rules: ${ruleNames}. All matches were allow or count actions. No blocking conditions were triggered.`;
+        } else {
+            return 'No rules matched. Default action would apply.';
+        }
+    };
+
+    // Helper to generate AI summary (OpenAI API)
+    const generateAISummary = async (results, blockedRules, matchedRules) => {
+        if (!import.meta.env.VITE_REACT_APP_OPENAI_API_KEY) return null;
+        try {
+            // Build concise summary for the AI
+            const conciseResults = {
+                outcome: blockedRules.length > 0
+                    ? `Blocked by rule "${blockedRules[0]?.rule.Name || blockedRules[0]?.rule.name}" (priority ${blockedRules[0]?.priority})`
+                    : matchedRules.length > 0
+                        ? "Matched rules present, but none would block the request"
+                        : "No rules matched; default action applies",
+                decisiveRule: blockedRules.length > 0
+                    ? {
+                        name: blockedRules[0]?.rule.Name || blockedRules[0]?.rule.name,
+                        reason: blockedRules[0]?.reason,
+                        priority: blockedRules[0]?.priority
+                    }
+                    : null,
+                matchedRules: matchedRules.slice(0, 10).map(r => ({
+                    name: r.rule.Name || r.rule.name,
+                    action: r.action
+                })),
+                risk: blockedRules.some(r => r.riskLevel === "critical" || r.riskLevel === "high")
+                    ? "High risk detected"
+                    : "No high risk detected"
+            };
+            const prompt = `You are an AWS security manager. Summarize the following WAF/ALB evaluation for a manager. Only use the facts provided below. Do not speculate or invent details.\n\n${JSON.stringify(conciseResults, null, 2)}`;
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${import.meta.env.VITE_REACT_APP_OPENAI_API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: 'gpt-3.5-turbo',
+                    messages: [{ role: 'user', content: prompt }],
+                    max_tokens: 120,
+                    temperature: 0.2
+                })
+            });
+            const data = await response.json();
+            return data.choices?.[0]?.message?.content?.trim() || null;
+        } catch {
+            return null;
+        }
+    };
+
+    // Update AI summary after evaluation
+    useEffect(() => {
+        if (!results) return;
+        (async () => {
+            let summary = null;
+            summary = await generateAISummary(results, blockedRules, matchedRules);
+            if (!summary) {
+                summary = generateLocalSummary(results, blockedRules, matchedRules);
+            }
+            setAiSummary(summary);
+        })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [results]);
 
     return (
         <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -704,30 +991,6 @@ const RequestDebugger = () => {
                     >
                         Save Test Case
                     </Button>
-                    <FormControlLabel
-                        control={<Switch checked={stepMode} onChange={e => setStepMode(e.target.checked)} />}
-                        label="Step-by-step mode"
-                    />
-                    {stepMode && results && (
-                        <>
-                            <Button 
-                                variant="outlined" 
-                                onClick={handleStepThrough}
-                                disabled={currentStep >= results.length}
-                                sx={{ borderRadius: 3, fontWeight: 600, fontSize: '1rem', px: 3, py: 1 }}
-                            >
-                                Next Step ({currentStep + 1}/{results.length})
-                            </Button>
-                            <Button 
-                                variant="outlined" 
-                                onClick={() => setCurrentStep(0)}
-                                startIcon={<RestartAltIcon />}
-                                sx={{ borderRadius: 3, fontWeight: 600, fontSize: '1rem', px: 3, py: 1 }}
-                            >
-                                Reset
-                            </Button>
-                        </>
-                    )}
                 </Box>
 
                 {/* Test Cases */}
@@ -744,6 +1007,13 @@ const RequestDebugger = () => {
                                     size="small"
                                 />
                             ))}
+                            <IconButton component="span" onClick={handleExportTestCases} size="small" color="primary">
+                                <FileDownloadIcon />
+                            </IconButton>
+                            <IconButton component="label" size="small" color="primary">
+                                <FileUploadIcon />
+                                <input type="file" accept="application/json" hidden onChange={handleImportTestCases} />
+                            </IconButton>
                         </Stack>
                     </Box>
                 )}
@@ -853,6 +1123,7 @@ const RequestDebugger = () => {
 
                     {activeTab === 0 && (
                         <Box>
+                            {/* Blocked/Allowed/No Match Alerts */}
                             {blockedRules.length > 0 ? (
                                 <Alert severity="error" sx={{ mb: 2 }}>
                                     <Typography variant="h6">Request Would Be BLOCKED</Typography>
@@ -876,42 +1147,12 @@ const RequestDebugger = () => {
                                     </Typography>
                                 </Alert>
                             )}
-
-                            {matchedRules.length > 0 && (
-                                <Accordion>
-                                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                                        <Typography variant="h6">Matched Rules Details</Typography>
-                                    </AccordionSummary>
-                                    <AccordionDetails>
-                                        <List>
-                                            {matchedRules.map((result, index) => (
-                                                <ListItem key={index}>
-                                                    <ListItemIcon>
-                                                        {result.action === 'BLOCK' || result.action === 'DENY' ? 
-                                                            <CancelIcon color="error" /> : 
-                                                            <CheckCircleIcon color="success" />
-                                                        }
-                                                    </ListItemIcon>
-                                                    <ListItemText
-                                                        primary={
-                                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                                <Typography>
-                                                                    {result.rule.Name || result.rule.name} (Priority: {result.priority})
-                                                                </Typography>
-                                                                <Chip 
-                                                                    label={result.riskLevel} 
-                                                                    size="small" 
-                                                                    color={getRiskLevelColor(result.riskLevel)}
-                                                                />
-                                                            </Box>
-                                                        }
-                                                        secondary={`Action: ${result.action} | ${result.reason}`}
-                                                    />
-                                                </ListItem>
-                                            ))}
-                                        </List>
-                                    </AccordionDetails>
-                                </Accordion>
+                            {/* AI/Local Summary - now below the verdict alert */}
+                            {aiSummary && (
+                                <Alert severity="info" sx={{ mb: 2 }}>
+                                    <Typography variant="subtitle1"><b>Summary</b></Typography>
+                                    <Typography>{aiSummary}</Typography>
+                                </Alert>
                             )}
                         </Box>
                     )}
@@ -976,7 +1217,9 @@ const RequestDebugger = () => {
                             ) : (
                                 <Stack spacing={2}>
                                     {matchedRules.map((result, index) => (
-                                        <Card key={index} variant="outlined">
+                                        <Card key={index} variant="outlined" sx={{ cursor: 'pointer' }}
+                                            onClick={() => { setSelectedRule(result.rule); setPopupOpen(true); }}
+                                        >
                                             <CardContent>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                                                     {result.action === 'BLOCK' || result.action === 'DENY' ? 
@@ -1015,6 +1258,12 @@ const RequestDebugger = () => {
                                     ))}
                                 </Stack>
                             )}
+                            <RuleDetailsPopup
+                                open={popupOpen}
+                                onClose={() => setPopupOpen(false)}
+                                rule={selectedRule}
+                                dataArray={combinedRules}
+                            />
                         </Box>
                     )}
 

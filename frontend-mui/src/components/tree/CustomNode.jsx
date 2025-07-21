@@ -13,6 +13,28 @@ import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 
 const getNodeStyle = (action, diameter, isParent, isChild, darkTheme, isFaded, nodeType, viewType) => {
+    // Softer colors for interlinked (combined) view
+    if (viewType === 'waf' && (nodeType === 'acl' || nodeType === 'alb')) {
+        return {
+            width: diameter,
+            height: diameter,
+            borderRadius: '50%',
+            background: nodeType === 'acl' ? '#376fa3' : '#ffb347', // deeper blue for ACL, deeper orange for ALB
+            border: nodeType === 'acl' ? '3px solid #376fa3' : '3px solid #ffb347',
+            color: '#222',
+            fontWeight: 'bold',
+            boxShadow: darkTheme ? '0 4px 6px rgba(0, 0, 0, 0.2)' : '0 4px 6px rgba(56, 57, 59, 0.1)',
+            opacity: isFaded ? 0.3 : 1,
+            outline: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            padding: 0,
+            transition: 'all 0.3s ease',
+        };
+    }
     // Only use default blue style for WAF view, not CDN-WAF
     if (viewType === 'waf' || nodeType === 'cdn-waf' || nodeType === 'alb' || nodeType === 'alb-waf') {
         return {
