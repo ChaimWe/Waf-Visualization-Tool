@@ -1,12 +1,7 @@
 import React from 'react';
 import { Handle, Position } from 'reactflow';
 import { useThemeContext } from '../../context/ThemeContext';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import BlockIcon from '@mui/icons-material/Block';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import Tooltip from '@mui/material/Tooltip';
-import ReactDOM from 'react-dom';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
