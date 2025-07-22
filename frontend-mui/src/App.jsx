@@ -8,7 +8,6 @@ import Topbar from './components/Topbar';
 import HomePage from './pages/HomePage';
 import ExplorerPage from './pages/ExplorerPage';
 import AboutPage from './pages/AboutPage';
-import AlbPage from './pages/AlbPage';
 import AIPage from './pages/AIPage';
 import RequestDebugger from './debugger/RequestDebugger';
 import { useDataSource } from './context/DataSourceContext';
@@ -69,7 +68,6 @@ export default function App() {
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/ai" element={<AIPage />} />
                 <Route path="/debugger" element={<RequestDebugger />} />
-                <Route path="/alb/:albId" element={<AlbPage />} />
               </Routes>
             </Box>
           </Box>

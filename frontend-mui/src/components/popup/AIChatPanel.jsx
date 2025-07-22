@@ -81,6 +81,11 @@ export default function AIChatPanel({ rule, allRules, edges = [], isAIPage = fal
   const [scrollSpeed, setScrollSpeed] = useState('normal');
   const [activeTab, setActiveTab] = useState('chat');
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   // Calculate parent and child rules for the current rule
   const ruleId = String(rule?.id || '');
@@ -112,13 +117,15 @@ export default function AIChatPanel({ rule, allRules, edges = [], isAIPage = fal
     scrollToBottom();
   }, [messages.length, scrollToBottom]);
 
-  // Placeholder for AI send logic
+  // Accepts a flag to distinguish between keyboard (Enter) and mouse (button)
   const sendMessage = async () => {
     if (!input.trim()) return;
     const userMsg = { sender: 'user', text: input };
     setMessages(msgs => [...msgs, userMsg]);
     setLoading(true);
     setInput('');
+    setTimeout(() => inputRef.current?.focus(), 50); // Slight delay helps if input is re-rendered
+
     try {
       const apiKey = import.meta.env.VITE_REACT_APP_OPENAI_API_KEY;
       // WARNING: Sending all rules may hit token limits for very large datasets.
@@ -211,7 +218,7 @@ export default function AIChatPanel({ rule, allRules, edges = [], isAIPage = fal
       p: 0,
       mt: 0,
       width: '100%',
-      maxWidth: 420,
+      minWidth: 900,
       borderRadius: 4,
       boxShadow: 6,
       background: theme.palette.background.paper,
@@ -270,8 +277,7 @@ export default function AIChatPanel({ rule, allRules, edges = [], isAIPage = fal
       <Box ref={containerRef} sx={{
         width: '100%',
         flex: 1,
-        maxHeight: 320,
-        minHeight: 220,
+        minHeight: 500,
         overflowY: 'auto',
         p: 2,
         background: theme.palette.mode === 'dark' ? '#23272f' : '#f7f9fc',
@@ -291,7 +297,7 @@ export default function AIChatPanel({ rule, allRules, edges = [], isAIPage = fal
           >
             <Box
               sx={{
-                maxWidth: '80%',
+                maxWidth: '85%',
                 bgcolor: msg.sender === 'user' ? 'primary.main' : 'grey.200',
                 color: msg.sender === 'user' ? '#fff' : 'text.primary',
                 px: 2,
@@ -323,11 +329,13 @@ export default function AIChatPanel({ rule, allRules, edges = [], isAIPage = fal
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') sendMessage(); }}
-          disabled={loading}
           sx={{ bgcolor: '#fff', borderRadius: 2 }}
+          inputRef={inputRef}
+          autoFocus
         />
         <Button
           variant="contained"
+          onMouseDown={e => e.preventDefault()} // Prevent button from taking focus
           onClick={sendMessage}
           disabled={loading || !input.trim()}
           sx={{

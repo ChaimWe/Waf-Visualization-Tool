@@ -828,8 +828,8 @@ const RequestDebugger = () => {
     }, [results]);
 
     return (
-        <Container maxWidth="xl" sx={{ py: 4 }}>
-            <Paper sx={{ p: 3, mb: 3 }}>
+        <Container maxWidth="xl" sx={{ py: 4, height: 'auto' }}>
+            <Paper sx={{ p: 3, mb: 3, }}>
                 <Stack direction="row" spacing={2} alignItems="center" mb={2}>
                     <BugReportIcon color="primary" />
                     <Typography variant="h5">Advanced WAF Request Debugger</Typography>
@@ -1078,7 +1078,7 @@ const RequestDebugger = () => {
             </Dialog>
 
             {results && (
-                <Paper sx={{ p: 3 }}>
+                <Paper sx={{ p: 3, height: 'auto'}}>
                     <Box sx={{ mb: 3 }}>
                         <Typography variant="h6" mb={2}>Evaluation Results</Typography>
                         <Stack direction="row" spacing={2} flexWrap="wrap">

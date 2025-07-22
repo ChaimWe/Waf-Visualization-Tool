@@ -8,8 +8,6 @@ import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Button from '@mui/material/Button';
-import DownloadIcon from '@mui/icons-material/Download';
-// import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import MenuIcon from '@mui/icons-material/Menu';
 import Typography from '@mui/material/Typography';
 import { useNavigate } from 'react-router-dom';
@@ -20,9 +18,7 @@ import Avatar from '@mui/material/Avatar';
 import UploadIcon from '@mui/icons-material/Upload';
 import { useDataSource } from '../context/DataSourceContext';
 import Chip from '@mui/material/Chip';
-import Select from '@mui/material/Select';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
+
 
 export default function Topbar({ title = 'WAF Visualization Tool', aclData, albData, setAclData, setAlbData, clearAclData, clearAlbData, onMenuClick }) {
   const theme = useTheme();
@@ -178,7 +174,7 @@ export default function Topbar({ title = 'WAF Visualization Tool', aclData, albD
           />
           <Menu anchorEl={uploadMenuAnchor} open={uploadMenuOpen} onClose={handleUploadMenuClose}>
             <MenuItem onClick={handleAclUploadClick}>CDN-WAF JSON</MenuItem>
-            <MenuItem onClick={handleAlbUploadClick}>WAF-ALBJSON</MenuItem>
+            <MenuItem onClick={handleAlbUploadClick}>WAF-ALB JSON</MenuItem>
           </Menu>
           {/* Delete buttons for WAF/ALB */}
           {aclData && (
@@ -199,16 +195,14 @@ export default function Topbar({ title = 'WAF Visualization Tool', aclData, albD
                 color: hoveredDelete === 'acl' ? '#fff' : theme.palette.grey[700],
                 borderColor: hoveredDelete === 'acl' ? theme.palette.error.main : theme.palette.grey[400],
                 background: hoveredDelete === 'acl' ? theme.palette.error.main : 'transparent',
-                width: 64,
-                minWidth: 64,
-                maxWidth: 64,
+                width: 'fit-content',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 transition: 'all 0.2s',
               }}
             >
-              {hoveredDelete === 'acl' ? <DeleteIcon sx={{ color: '#fff' }} /> : 'WAF'}
+              {hoveredDelete === 'acl' ? <DeleteIcon sx={{ color: '#fff' }} /> : 'CDN-WAF'}
             </Button>
           )}
           {albData && (
@@ -229,24 +223,22 @@ export default function Topbar({ title = 'WAF Visualization Tool', aclData, albD
                 color: hoveredDelete === 'alb' ? '#fff' : theme.palette.grey[700],
                 borderColor: hoveredDelete === 'alb' ? theme.palette.error.main : theme.palette.grey[400],
                 background: hoveredDelete === 'alb' ? theme.palette.error.main : 'transparent',
-                width: 64,
-                minWidth: 64,
-                maxWidth: 64,
+                width: 'fit-content',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 transition: 'all 0.2s',
               }}
             >
-              {hoveredDelete === 'alb' ? <DeleteIcon sx={{ color: '#fff' }} /> : 'ALB'}
+              {hoveredDelete === 'alb' ? <DeleteIcon sx={{ color: '#fff' }} /> : 'WAF-ALB'}
             </Button>
           )}
           {/* Confirmation dialog */}
           {confirmOpen && (
             <Box sx={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 2000, background: 'rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Box sx={{ background: '#fff', p: 4, borderRadius: 2, boxShadow: 4, minWidth: 280 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>Delete {deleteType === 'acl' ? 'WAF' : 'ALB'} file?</Typography>
-                <Typography variant="body2" sx={{ mb: 3 }}>Are you sure you want to delete this file? This action cannot be undone.</Typography>
+                <Typography variant="h6" sx={{ mb: 2 }}>Remove the {deleteType === 'acl' ? 'CDN-WAF' : 'WAF-ALB'} file?</Typography>
+                <Typography variant="body2" sx={{ mb: 3 }}>Are you sure you want to remove this file? This action cannot be undone.</Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                   <Button 
                     onClick={handleCancelDelete} 
@@ -260,7 +252,7 @@ export default function Topbar({ title = 'WAF Visualization Tool', aclData, albD
                     variant="contained" 
                     color="error"
                   >
-                    Delete
+                    Remove
                   </Button>
                 </Box>
               </Box>
@@ -276,17 +268,12 @@ export default function Topbar({ title = 'WAF Visualization Tool', aclData, albD
             size="small"
             sx={{ fontWeight: 500, fontSize: '0.95rem', px: 1, mr: 1 }}
           />
-          {/* Replace Download icon with profile photo */}
+          {/* Profile photo */}
           <Tooltip title="Profile">
             <IconButton size="small">
               <Avatar sx={{ width: 48, height: 48 }}>U</Avatar>
             </IconButton>
           </Tooltip>
-          {/* <Tooltip title="Help / Legend">
-            <IconButton size="small">
-              <HelpOutlineIcon />
-            </IconButton>
-          </Tooltip> */}
         </Box>
       </Toolbar>
       {/* Alert for upload status */}

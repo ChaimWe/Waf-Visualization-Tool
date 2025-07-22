@@ -137,7 +137,7 @@ const RuleDetailsPopup = ({ open, onClose, rule, dataArray, centerNode, onOpenCh
       onClose={onClose}
       PaperProps={{ sx: { width: 500, maxWidth: '100vw', p: 0, boxShadow: 6 } }}
     >
-      <RuleDetailsContent rule={rule} rules={dataArray} onClose={onClose} showJsonTab={false} showCloseButton={true} viewType={rule.nodeType === 'alb' ? 'alb' : rule.nodeType === 'acl' ? 'acl' : (rule.Conditions && rule.Statement ? 'combined' : rule.Conditions ? 'alb' : 'acl')} />
+      <RuleDetailsContent rule={rule} rules={dataArray} onClose={onClose} showJsonTab={true} showCloseButton={true} viewType={rule.nodeType === 'alb' ? 'alb' : rule.nodeType === 'acl' ? 'acl' : (rule.Conditions && rule.Statement ? 'combined' : rule.Conditions ? 'alb' : 'acl')} />
     </Drawer>
   );
 };

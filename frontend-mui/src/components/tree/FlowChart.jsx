@@ -118,7 +118,7 @@ const FlowChartInner = forwardRef(({
     showArrows,
     nodesPerRow,
     orderBy,
-    albMode, // Added albMode prop
+    albMode, 
     viewName,
 }, ref) => {
     const [hoveredNode, setHoveredNode] = useState(null);
@@ -135,7 +135,6 @@ const FlowChartInner = forwardRef(({
     const reactFlowInstance = useReactFlow();
     const [isLocked, setIsLocked] = useState(false);
 
-    // --- BEGIN PORTED TREE LOGIC FROM OLD FLOWCHART ---
     // Dependency grouping and fallback edge logic
     const colorOrder = ['gray', 'blue', 'light blue', 'green'];
     const preprocessedNodes = useMemo(() => {
@@ -192,7 +191,6 @@ const FlowChartInner = forwardRef(({
     const filteredEdges = useMemo(() => {
         const nodeIds = new Set(preprocessedNodes.map(n => n.id));
         const valid = (allEdges || []).filter(e => e.source && e.target && nodeIds.has(e.source) && nodeIds.has(e.target));
-        // Remove fallback: do not generate artificial edges if there are no real edges
         // Only return real edges
         return valid.map(e => ({ ...e, type: 'custom' }));
     }, [allEdges, preprocessedNodes]);
@@ -243,9 +241,7 @@ const FlowChartInner = forwardRef(({
 
     // Add debugging for edge visibility
     useEffect(() => {
-        
     }, [showArrows, filteredEdges.length, selectedNode, filteredEdges, positionedNodes]);
-    // --- END PORTED TREE LOGIC ---
 
     // Remove initializeData and related useEffect
     useEffect(() => {
@@ -259,7 +255,7 @@ const FlowChartInner = forwardRef(({
         }
         
         // TEMPORARY DEBUG: Force show all edges for debugging
-        const DEBUG_FORCE_SHOW_EDGES = true;
+        //const DEBUG_FORCE_SHOW_EDGES = true;
         let edgesToUse = filteredEdges;
         
         // Add a test edge if we have at least 2 nodes and no edges
@@ -383,10 +379,6 @@ const FlowChartInner = forwardRef(({
         }
         setSelectedNode(node.id);
     }, [doubleClickedNode, nodes, filteredEdges, findUpwardDependencies, findDownwardDependencies, setSelectedNode]);
-
-    const onInit = useCallback((instance) => {
-        // No-op for now
-    }, []);
 
     // Use layoutNodes to position nodes
     const positionedNodesWithOffset = useMemo(() => {
@@ -542,8 +534,6 @@ const FlowChartInner = forwardRef(({
         <Box sx={{ width: '100%', height: '100%', position: 'relative', flex: 1, minHeight: 600 }}>
             {/* Controls: Sorting, Nodes/Row, Export, Help */}
             <Box sx={{ position: 'absolute', top: 8, left: 8, zIndex: 10, display: 'flex', gap: 2 }}>
-                {/* Removed ToggleButtonGroup for 'orderBy' */}
-                {/* Removed ToggleButtonGroup for 'nodesPerRow' */}
                 <Tooltip title="Export as PDF">
                     <IconButton onClick={handleExport} size="small">
                         <DownloadIcon />
@@ -610,9 +600,11 @@ const FlowChartInner = forwardRef(({
                             </>
                           ) : Array.isArray(allNodes) && allNodes.some(n => n.data && (n.data.nodeType === 'acl' || n.data.borderColor === '#e75480')) ? (
                             <>
-                              <b>ACL Node Colors:</b><br/>
-                              <span style={{ background: '#1976d2', border: '2px solid #1565c0', padding: '2px 8px', borderRadius: 4, marginRight: 6, color: '#fff' }}>Blue</span>: ACL Rule<br/>
-                              <span style={{ color: '#e75480', fontWeight: 600, border: '2px solid #e75480', padding: '0 4px', borderRadius: 3 }}>Pink border</span>: Label-emitting rules<br/>
+                            <b>CDN-WAF Node Colors:</b><br/>
+                              <span style={{ color: '#319177', fontWeight: 600 }}>Green</span>: Parent nodes<br/>
+                              <span style={{ color: '#007fff', fontWeight: 600 }}>Blue</span>: Child nodes<br/>
+                              <span style={{ color: '#7851a9', fontWeight: 600 }}>Purple</span>: Parent & Child nodes<br/>
+                              <span style={{ color: '#757575', fontWeight: 600 }}>Gray</span>: Other nodes<br/>
                               <br/>
                               <b>Action Indicators:</b><br/>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
@@ -632,15 +624,14 @@ const FlowChartInner = forwardRef(({
                                 <span>Other</span>
                               </div>
                               <br/>
+                              <b>Edges:</b> Show <strong>label-based</strong> dependencies between rules.<br/>
                               Click any node to see details and relationships in the inspector.<br/>
                             </>
                           ) : (
                             <>
                               <b>Combined WAF (Interlinked) Node Colors:</b><br/>
-                              <span style={{ color: '#319177', fontWeight: 600 }}>Green</span>: Parent nodes<br/>
-                              <span style={{ color: '#007fff', fontWeight: 600 }}>Blue</span>: Child nodes<br/>
-                              <span style={{ color: '#7851a9', fontWeight: 600 }}>Purple</span>: Parent & Child nodes<br/>
-                              <span style={{ color: '#757575', fontWeight: 600 }}>Gray</span>: Other nodes<br/>
+                              <span style={{ color: '#376fa3', fontWeight: 600 }}>Blue</span>: CDN-WAF nodes<br/>
+                              <span style={{ color: '#ffb347', fontWeight: 600 }}>Orange</span>: WAF-ALB nodes<br/>
                               <span style={{ color: '#e75480', fontWeight: 600, border: '2px solid #e75480', padding: '0 4px', borderRadius: 3 }}>Pink border</span>: Label-emitting rules<br/>
                               <br/>
                               <b>Action Indicators:</b><br/>
@@ -661,7 +652,7 @@ const FlowChartInner = forwardRef(({
                                 <span>Other</span>
                               </div>
                               <br/>
-                              <b>Edges:</b> Show label-based dependencies between rules.<br/>
+                              <b>Edges:</b> Show <strong>header-based</strong> dependencies between rules.<br/>
                               Click any node to see details and relationships in the inspector.<br/>
                             </>
                           )}

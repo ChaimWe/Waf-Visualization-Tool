@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Container, Paper, Typography, Button, Chip, Alert } from '@mui/material';
+import { Box, Container, Paper, Toolbar, Typography, Button, Chip, Alert } from '@mui/material';
 import { useThemeContext } from '../context/ThemeContext';
 import CustomSnackbar from '../components/popup/CustomSnackbar';
 import { useDataSource } from '../context/DataSourceContext';
@@ -74,7 +74,9 @@ const AIPage = () => {
 
     return (
         <ErrorBoundary>
-            <Box sx={{ width: '100vw', height: '100vh', p: 0, m: 0, position: 'relative', background: darkTheme ? '#222' : '#e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Box sx={{ width: '100vw', height: 'auto', p: 0, m: 0, position: 'relative', background: darkTheme ? '#222' : '#e0e0e0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+               {/* Spacer to offset fixed TopBar height */}
+               
                 {/* Dark Overlay for Dark Mode */}
                 {darkTheme && (
                     <Box sx={{
@@ -89,10 +91,10 @@ const AIPage = () => {
                     }} />
                 )}
                 {/* Centered Content Area */}
-                <Box sx={{ width: '100%', maxWidth: 480, mx: 'auto', zIndex: 2, p: 0, m: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <Box sx={{ width: '100%', maxWidth: 900, mx: 'auto', zIndex: 2, p: 0, m: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                     {/* Header Section */}
-                    <Paper elevation={4} sx={{ p: 4, borderRadius: 4, mb: 3, width: '100%', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, justifyContent: 'center' }}>
+                    <Paper sx={{ px: 3, mb: 2, width: '100%', textAlign: 'center' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
                             <SmartToyIcon color="primary" sx={{ fontSize: 36 }} />
                             <Typography variant="h4" fontWeight={700}>
                                 AI Assistant
@@ -101,15 +103,12 @@ const AIPage = () => {
                         <Typography variant="h6" fontWeight={500} color="text.secondary" mb={2}>
                             Chat with AI about your WAF rules for insights and recommendations
                         </Typography>
-                    </Paper>
-                    {/* Rule status and loader */}
-                    <Paper sx={{ p: 3, mb: 3, width: '100%', textAlign: 'center' }}>
                         {rules.length === 0 ? (
-                            <Box sx={{ textAlign: 'center', py: 2 }}>
+                            <Box sx={{ textAlign: 'center',  }}>
                                 <Typography variant="body1" sx={{ color: theme.palette.text.primary, mb: 2 }}>
                                     No rules loaded yet. You can still chat with the AI Assistant!
                                 </Typography>
-                                <Alert severity="info" sx={{ mb: 2 }}>
+                                <Alert severity="info" sx={{ mb: 0.5}}>
                                     Use the upload buttons in the top bar to load your WAF/ACL or ALB rules for more context.
                                 </Alert>
                             </Box>
