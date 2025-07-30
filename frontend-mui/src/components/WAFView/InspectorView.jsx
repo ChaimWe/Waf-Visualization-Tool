@@ -229,7 +229,7 @@ const InspectorView = ({ rules, showSubgraph, initialSelected }) => {
     parents.forEach((n, i) => {
       nodes.push({
         ...n,
-        position: { x: i * spacingX - ((parents.length-1)*spacingX/2), y: 0 },
+        position: { x: i * spacingX - ((parents.length - 1) * spacingX / 2), y: 0 },
         type: 'custom-node',
         data: { ...n.data, inPopup: true }
       });
@@ -247,7 +247,7 @@ const InspectorView = ({ rules, showSubgraph, initialSelected }) => {
     children.forEach((n, i) => {
       nodes.push({
         ...n,
-        position: { x: i * spacingX - ((children.length-1)*spacingX/2), y: 2*spacingY },
+        position: { x: i * spacingX - ((children.length - 1) * spacingX / 2), y: 2 * spacingY },
         type: 'custom-node',
         data: { ...n.data, inPopup: true }
       });
@@ -261,46 +261,65 @@ const InspectorView = ({ rules, showSubgraph, initialSelected }) => {
   return (
     <div style={{ display: 'flex', height: '100%', width: '100%', background: 'rgba(255,255,255,0.95)' }}>
       {/* Left: Node list */}
-      <div style={{ width: 260, borderRight: '1px solid #eee', overflowY: 'auto', padding: '24px 0', background: '#fafbfc', height: '100%' }}>
-        {rules && rules.length > 0 ? rules.map((rule, idx) => {
-          const name = rule.Name || rule.name || '';
-          const priority = rule.Priority || rule.priority || '';
-          return (
-            <div
-              key={rule.Name || rule.name || idx}
-              onClick={() => { setSelected(rule); setTab(0); }}
-              style={{
-                padding: '12px 24px',
-                cursor: 'pointer',
-                background: selected === rule ? '#e3f2fd' : 'transparent',
-                fontWeight: selected === rule ? 600 : 400,
-                borderLeft: selected === rule ? '4px solid #1976d2' : '4px solid transparent',
-                color: selected === rule ? '#1976d2' : '#222',
-                transition: 'background 0.2s, color 0.2s',
-              }}
-            >
-              <div style={{ fontSize: 17 }}>{name}</div>
-              <div style={{ fontSize: 13, color: '#888' }}>Priority: {priority}</div>
-            </div>
-          );
-        }) : <div style={{ padding: 24, color: '#888' }}>No rules found.</div>}
+      <div style={{ width: 260, borderRight: '1px solid #eee', height: '100%', background: '#fafbfc', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 48px)', padding: '24px 0' }}>
+          {rules && rules.length > 0 ? rules.map((rule, idx) => {
+            const name = rule.Name || rule.name || '';
+            const priority = rule.Priority || rule.priority || '';
+            return (
+              <div
+                key={rule.Name || rule.name || idx}
+                onClick={() => { setSelected(rule); }}
+                style={{
+                  padding: '12px 24px',
+                  cursor: 'pointer',
+                  background: selected === rule ? '#e3f2fd' : 'transparent',
+                  fontWeight: selected === rule ? 600 : 400,
+                  borderLeft: selected === rule ? '4px solid #1976d2' : '4px solid transparent',
+                  color: selected === rule ? '#1976d2' : '#222',
+                  transition: 'background 0.2s, color 0.2s',
+                }}
+              >
+                <div style={{ fontSize: 17 }}>{name}</div>
+                <div style={{ fontSize: 13, color: '#888' }}>Priority: {priority}</div>
+              </div>
+            );
+          }) : <div style={{ padding: 24, color: '#888' }}>No rules found.</div>}
+        </div>
       </div>
       {/* Right: Panel with details/tabs, fills all remaining space */}
       <div style={{ flex: 1, minWidth: 0, height: '100%', width: '100%', display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
         {selected && (
           <>
-            <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
-              <Tab label="Details" />
-              <Tab label="JSON" />
-              <Tab label="Dependencies" />
-              <Tab label="Warnings" />
+            {/* Reverse tab order and preserve tab state per rule */}
+            <Tabs
+              value={(() => {
+                // Use a ref to store tab state per rule
+                if (!InspectorView._tabState) InspectorView._tabState = {};
+                const ruleId = selected.Name || selected.name || selected.id;
+                if (InspectorView._tabState[ruleId] === undefined) InspectorView._tabState[ruleId] = 4; // Default to Subgraph (now leftmost)
+                return InspectorView._tabState[ruleId];
+              })()}
+              onChange={(_, v) => {
+                const ruleId = selected.Name || selected.name || selected.id;
+                if (!InspectorView._tabState) InspectorView._tabState = {};
+                InspectorView._tabState[ruleId] = v;
+                setTab(v);
+              }}
+              sx={{ mb: 2 }}
+              TabIndicatorProps={{ style: { left: 0, right: 'auto' } }}
+            >
               <Tab label="Subgraph" />
+              <Tab label="Warnings" />
+              <Tab label="Dependencies" />
+              <Tab label="JSON" />
+              <Tab label="Details" />
             </Tabs>
-            {tab === 0 && <RuleDetailsContent rule={selected} rules={rules} showJsonTab={true} showCloseButton={false} viewType={selected.nodeType === 'alb' ? 'alb' : selected.nodeType === 'acl' ? 'acl' : (selected.Conditions && selected.Statement ? 'combined' : selected.Conditions ? 'alb' : 'acl')} activeSection="details" />}
-            {tab === 1 && <RuleDetailsContent rule={selected} rules={rules} showJsonTab={true} showCloseButton={false} viewType={selected.nodeType === 'alb' ? 'alb' : selected.nodeType === 'acl' ? 'acl' : (selected.Conditions && selected.Statement ? 'combined' : selected.Conditions ? 'alb' : 'acl')} activeSection="json" />}
+            {tab === 4 && <RuleDetailsContent rule={selected} rules={rules} showJsonTab={true} showCloseButton={false} viewType={selected.nodeType === 'alb' ? 'alb' : selected.nodeType === 'acl' ? 'acl' : (selected.Conditions && selected.Statement ? 'combined' : selected.Conditions ? 'alb' : 'acl')} activeSection="details" />}
+            {tab === 3 && <RuleDetailsContent rule={selected} rules={rules} showJsonTab={true} showCloseButton={false} viewType={selected.nodeType === 'alb' ? 'alb' : selected.nodeType === 'acl' ? 'acl' : (selected.Conditions && selected.Statement ? 'combined' : selected.Conditions ? 'alb' : 'acl')} activeSection="json" />}
             {tab === 2 && <RuleDetailsContent rule={selected} rules={rules} showJsonTab={true} showCloseButton={false} viewType={selected.nodeType === 'alb' ? 'alb' : selected.nodeType === 'acl' ? 'acl' : (selected.Conditions && selected.Statement ? 'combined' : selected.Conditions ? 'alb' : 'acl')} activeSection="dependencies" />}
-            {tab === 3 && <RuleDetailsContent rule={selected} rules={rules} showJsonTab={true} showCloseButton={false} viewType={selected.nodeType === 'alb' ? 'alb' : selected.nodeType === 'acl' ? 'acl' : (selected.Conditions && selected.Statement ? 'combined' : selected.Conditions ? 'alb' : 'acl')} activeSection="warnings" />}
-            {tab === 4 && (
+            {tab === 1 && <RuleDetailsContent rule={selected} rules={rules} showJsonTab={true} showCloseButton={false} viewType={selected.nodeType === 'alb' ? 'alb' : selected.nodeType === 'acl' ? 'acl' : (selected.Conditions && selected.Statement ? 'combined' : selected.Conditions ? 'alb' : 'acl')} activeSection="warnings" />}
+            {tab === 0 && (
               <Box sx={{ flex: 1, minHeight: 0, minWidth: 0, p: 0, m: 0, width: '100%' }}>
                 {subNodes.length === 0 ? (
                   <Box sx={{ color: '#888', p: 4, textAlign: 'center' }}>No dependents for this rule.</Box>
@@ -309,7 +328,7 @@ const InspectorView = ({ rules, showSubgraph, initialSelected }) => {
                     allNodes={subNodes}
                     allEdges={subEdges}
                     selectedNode={selected ? (selected.Name || selected.name) : null}
-                    setSelectedNode={() => {}}
+                    setSelectedNode={() => { }}
                     nodesPerRow={8}
                     orderBy={'dependency'}
                     style={{ width: '100%' }}

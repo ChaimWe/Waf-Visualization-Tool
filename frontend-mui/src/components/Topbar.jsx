@@ -4,7 +4,7 @@ import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import { useTheme } from '@mui/material/styles';
 import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';  
+import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Button from '@mui/material/Button';
@@ -126,113 +126,151 @@ export default function Topbar({ title = 'WAF Visualization Tool', aclData, albD
               <MenuIcon />
             </IconButton>
           )}
+          {/* Upload and file buttons group */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 2 }}>
+            <Button
+              variant="outlined"
+              size="medium"
+              onClick={handleUploadMenuOpen}
+              disabled={loadedFiles >= 2}
+              startIcon={<UploadIcon />}
+              sx={{
+                minWidth: 140,
+                borderRadius: 4,
+                fontWeight: 700,
+                fontSize: '1.05rem',
+                px: { xs: 2, sm: 4 },
+                py: 1.5,
+                borderColor: '#43a047',
+                borderWidth: 2,
+                color: 'inherit',
+                background: 'transparent',
+                boxShadow: 2,
+                textTransform: 'none',
+                letterSpacing: 0.5,
+                boxSizing: 'border-box',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  borderColor: '#43a047',
+                  borderWidth: 2,
+                  background: 'transparent',
+                  color: 'inherit',
+                  boxShadow: 4,
+                },
+                '&:active': {
+                  borderColor: '#43a047',
+                  borderWidth: 2,
+                },
+                '&.Mui-disabled': {
+                  borderColor: '#43a047',
+                  borderWidth: 2,
+                  color: 'rgba(0,0,0,0.26)',
+                  background: 'transparent',
+                },
+              }}
+            >
+              Upload Files
+            </Button>
+            {/* Hidden file inputs always present in DOM */}
+            <input
+              type="file"
+              accept="application/json"
+              ref={aclInputRef}
+              onChange={e => handleFileChange('acl', e)}
+              style={{ display: 'none' }}
+            />
+            <input
+              type="file"
+              accept="application/json"
+              ref={albInputRef}
+              onChange={e => handleFileChange('alb', e)}
+              style={{ display: 'none' }}
+            />
+            <Menu anchorEl={uploadMenuAnchor} open={uploadMenuOpen} onClose={handleUploadMenuClose}>
+              <MenuItem onClick={handleAclUploadClick}>CDN-WAF JSON</MenuItem>
+              <MenuItem onClick={handleAlbUploadClick}>WAF-ALB JSON</MenuItem>
+            </Menu>
+            {/* File buttons group */}
+            {aclData && (
+              <Button
+                variant="outlined"
+                color="inherit"
+                size="small"
+                onClick={() => handleDeleteClick('acl')}
+                onMouseEnter={() => setHoveredDelete('acl')}
+                onMouseLeave={() => setHoveredDelete(null)}
+                sx={{
+                  borderRadius: 3,
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  px: 2,
+                  py: 1,
+                  minWidth: 90,
+                  minHeight: 36,
+                  ml: 0,
+                  color: hoveredDelete === 'acl' ? theme.palette.error.main : theme.palette.grey[700],
+                  borderColor: hoveredDelete === 'acl' ? theme.palette.error.main : theme.palette.grey[400],
+                  borderWidth: 2,
+                  background: 'transparent',
+                  width: 'fit-content',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxSizing: 'border-box',
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    borderColor: theme.palette.error.main,
+                    color: theme.palette.error.main,
+                    borderWidth: 2,
+                    background: 'transparent',
+                  },
+                }}
+              >
+                CDN-WAF
+              </Button>
+            )}
+            {albData && (
+              <Button
+                variant="outlined"
+                color="inherit"
+                size="small"
+                onClick={() => handleDeleteClick('alb')}
+                onMouseEnter={() => setHoveredDelete('alb')}
+                onMouseLeave={() => setHoveredDelete(null)}
+                sx={{
+                  borderRadius: 3,
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  px: 2,
+                  py: 1,
+                  minWidth: 90,
+                  minHeight: 36,
+                  ml: 0,
+                  color: hoveredDelete === 'alb' ? theme.palette.error.main : theme.palette.grey[700],
+                  borderColor: hoveredDelete === 'alb' ? theme.palette.error.main : theme.palette.grey[400],
+                  borderWidth: 2,
+                  background: 'transparent',
+                  width: 'fit-content',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxSizing: 'border-box',
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    borderColor: theme.palette.error.main,
+                    color: theme.palette.error.main,
+                    borderWidth: 2,
+                    background: 'transparent',
+                  },
+                }}
+              >
+                WAF-ALB
+              </Button>
+            )}
+          </Box>
         </Box>
         {/* Center: Filters, Upload and delete controls */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, justifyContent: { xs: 'flex-end', sm: 'center' } }}>
-          {/* Upload Data Dropdown */}
-          <Button
-            variant="contained"
-            size="medium"
-            onClick={handleUploadMenuOpen}
-            disabled={loadedFiles >= 2}
-            startIcon={<UploadIcon />}
-            sx={{
-              minWidth: 140,
-              borderRadius: 4,
-              fontWeight: 700,
-              fontSize: '1.05rem',
-              px: { xs: 2, sm: 4 },
-              py: 1.5,
-              background: 'linear-gradient(90deg, #43a047 0%, #66bb6a 100%)',
-              color: '#fff',
-              boxShadow: 2,
-              textTransform: 'none',
-              letterSpacing: 0.5,
-              '&:hover': {
-                background: 'linear-gradient(90deg, #388e3c 0%, #43a047 100%)',
-                boxShadow: 4,
-              },
-              transition: 'all 0.2s',
-            }}
-          >
-            Upload Files
-          </Button>
-          {/* Hidden file inputs always present in DOM */}
-          <input
-            type="file"
-            accept="application/json"
-            ref={aclInputRef}
-            onChange={e => handleFileChange('acl', e)}
-            style={{ display: 'none' }}
-          />
-          <input
-            type="file"
-            accept="application/json"
-            ref={albInputRef}
-            onChange={e => handleFileChange('alb', e)}
-            style={{ display: 'none' }}
-          />
-          <Menu anchorEl={uploadMenuAnchor} open={uploadMenuOpen} onClose={handleUploadMenuClose}>
-            <MenuItem onClick={handleAclUploadClick}>CDN-WAF JSON</MenuItem>
-            <MenuItem onClick={handleAlbUploadClick}>WAF-ALB JSON</MenuItem>
-          </Menu>
-          {/* Delete buttons for WAF/ALB */}
-          {aclData && (
-            <Button
-              variant="outlined"
-              color="inherit"
-              size="small"
-              onClick={() => handleDeleteClick('acl')}
-              onMouseEnter={() => setHoveredDelete('acl')}
-              onMouseLeave={() => setHoveredDelete(null)}
-              sx={{
-                borderRadius: 3,
-                fontWeight: 600,
-                fontSize: '1rem',
-                px: 2,
-                py: 1,
-                ml: 1,
-                color: hoveredDelete === 'acl' ? '#fff' : theme.palette.grey[700],
-                borderColor: hoveredDelete === 'acl' ? theme.palette.error.main : theme.palette.grey[400],
-                background: hoveredDelete === 'acl' ? theme.palette.error.main : 'transparent',
-                width: 'fit-content',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s',
-              }}
-            >
-              {hoveredDelete === 'acl' ? <DeleteIcon sx={{ color: '#fff' }} /> : 'CDN-WAF'}
-            </Button>
-          )}
-          {albData && (
-            <Button
-              variant="outlined"
-              color="inherit"
-              size="small"
-              onClick={() => handleDeleteClick('alb')}
-              onMouseEnter={() => setHoveredDelete('alb')}
-              onMouseLeave={() => setHoveredDelete(null)}
-              sx={{
-                borderRadius: 3,
-                fontWeight: 600,
-                fontSize: '1rem',
-                px: 2,
-                py: 1,
-                ml: 1,
-                color: hoveredDelete === 'alb' ? '#fff' : theme.palette.grey[700],
-                borderColor: hoveredDelete === 'alb' ? theme.palette.error.main : theme.palette.grey[400],
-                background: hoveredDelete === 'alb' ? theme.palette.error.main : 'transparent',
-                width: 'fit-content',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s',
-              }}
-            >
-              {hoveredDelete === 'alb' ? <DeleteIcon sx={{ color: '#fff' }} /> : 'WAF-ALB'}
-            </Button>
-          )}
           {/* Confirmation dialog */}
           {confirmOpen && (
             <Box sx={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 2000, background: 'rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -240,16 +278,16 @@ export default function Topbar({ title = 'WAF Visualization Tool', aclData, albD
                 <Typography variant="h6" sx={{ mb: 2 }}>Remove the {deleteType === 'acl' ? 'CDN-WAF' : 'WAF-ALB'} file?</Typography>
                 <Typography variant="body2" sx={{ mb: 3 }}>Are you sure you want to remove this file? This action cannot be undone.</Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                  <Button 
-                    onClick={handleCancelDelete} 
-                    variant="outlined" 
+                  <Button
+                    onClick={handleCancelDelete}
+                    variant="outlined"
                     autoFocus // Add autoFocus to ensure Cancel gets focus first
                   >
                     Cancel
                   </Button>
-                  <Button 
-                    onClick={handleConfirmDelete} 
-                    variant="contained" 
+                  <Button
+                    onClick={handleConfirmDelete}
+                    variant="contained"
                     color="error"
                   >
                     Remove
