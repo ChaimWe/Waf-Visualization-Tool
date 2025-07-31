@@ -63,6 +63,7 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { useDataSource } from '../context/DataSourceContext';
 import { useAWSCredentials } from '../context/AWSCredentialsContext';
 import RuleDetailsPopup from '../components/WAFView/RuleDetailsPopup';
+import { useTheme } from '@mui/material/styles';
 
 // Attack Payload Libraries
 const ATTACK_PAYLOADS = {
@@ -570,6 +571,7 @@ const RequestDebugger = () => {
     const [selectedRule, setSelectedRule] = useState(null);
     // Add AI summary state
     const [aiSummary, setAiSummary] = useState('');
+    const theme = useTheme();
 
     const aclLoaded = !!aclData;
     const albLoaded = !!albData;

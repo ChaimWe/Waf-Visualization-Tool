@@ -12,11 +12,11 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@aws-sdk/client-elastic-load-balancing-v2": "^3.750.0",
     "@aws-sdk/client-wafv2": "^3.750.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "express-session": "^1.18.0",
-    "@aws-sdk/client-elastic-load-balancing-v2": "^3.750.0"
+    "express-session": "^1.18.2"
   }
 }

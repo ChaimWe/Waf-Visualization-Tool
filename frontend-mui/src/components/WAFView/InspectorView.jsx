@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { Box, Typography, Tabs, Tab, Stack, Chip, Divider } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { useThemeContext } from '../../context/ThemeContext';
 import FlowChart from '../tree/FlowChart';
 import RuleDetailsContent from './RuleDetailsContent';
 
@@ -150,9 +152,18 @@ function extractWafEdges(rules) {
 
 // Extract content rendering from RuleDetailsSidebar
 function RuleJsonContent({ rule }) {
+  const theme = useTheme();
   if (!rule) return null;
   return (
-    <pre style={{ background: '#f5f5f5', padding: 16, borderRadius: 4, fontSize: 14, maxWidth: '100%', overflowX: 'auto' }}>{getJson(rule)}</pre>
+    <pre style={{ 
+      background: theme.palette.mode === 'dark' ? '#2d2d2d' : '#f5f5f5', 
+      padding: 16, 
+      borderRadius: 4, 
+      fontSize: 14, 
+      maxWidth: '100%', 
+      overflowX: 'auto',
+      color: theme.palette.text.primary
+    }}>{getJson(rule)}</pre>
   );
 }
 function RuleDependenciesContent({ rule, rules }) {
@@ -184,6 +195,7 @@ function RuleDependenciesContent({ rule, rules }) {
   );
 }
 function RuleWarningsContent({ rule }) {
+  const theme = useTheme();
   if (!rule) return null;
   return (
     <Box sx={{ p: 2 }}>
@@ -193,7 +205,7 @@ function RuleWarningsContent({ rule }) {
       ) : (
         <ul style={{ margin: 0, paddingLeft: 18 }}>
           {(rule.warnings || []).map((issue, idx) => (
-            <li key={idx} style={{ color: '#d32f2f' }}>{issue}</li>
+            <li key={idx} style={{ color: theme.palette.error.main }}>{issue}</li>
           ))}
         </ul>
       )}
@@ -204,6 +216,8 @@ function RuleWarningsContent({ rule }) {
 const InspectorView = ({ rules, showSubgraph, initialSelected }) => {
   const [selected, setSelected] = useState(initialSelected || (rules && rules.length > 0 ? rules[0] : null));
   const [tab, setTab] = useState(4); // Default to Subgraph tab
+  const theme = useTheme();
+  const { darkTheme } = useThemeContext();
 
   React.useEffect(() => {
     if (initialSelected) setSelected(initialSelected);
@@ -259,9 +273,21 @@ const InspectorView = ({ rules, showSubgraph, initialSelected }) => {
   }, [showSubgraph, selected, allNodes, allEdges]);
 
   return (
-    <div style={{ display: 'flex', height: '100%', width: '100%', background: 'rgba(255,255,255,0.95)' }}>
+    <div style={{ 
+      display: 'flex', 
+      height: '100%', 
+      width: '100%', 
+      background: darkTheme ? 'rgba(45,45,45,0.95)' : 'rgba(255,255,255,0.95)' 
+    }}>
       {/* Left: Node list */}
-      <div style={{ width: 260, borderRight: '1px solid #eee', height: '100%', background: '#fafbfc', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ 
+        width: 260, 
+        borderRight: `1px solid ${theme.palette.divider}`, 
+        height: '100%', 
+        background: darkTheme ? '#2d2d2d' : '#fafbfc', 
+        display: 'flex', 
+        flexDirection: 'column' 
+      }}>
         <div style={{ flex: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 48px)', padding: '24px 0' }}>
           {rules && rules.length > 0 ? rules.map((rule, idx) => {
             const name = rule.Name || rule.name || '';
@@ -273,18 +299,18 @@ const InspectorView = ({ rules, showSubgraph, initialSelected }) => {
                 style={{
                   padding: '12px 24px',
                   cursor: 'pointer',
-                  background: selected === rule ? '#e3f2fd' : 'transparent',
+                  background: selected === rule ? (darkTheme ? '#1e3a5f' : '#e3f2fd') : 'transparent',
                   fontWeight: selected === rule ? 600 : 400,
-                  borderLeft: selected === rule ? '4px solid #1976d2' : '4px solid transparent',
-                  color: selected === rule ? '#1976d2' : '#222',
+                  borderLeft: selected === rule ? `4px solid ${theme.palette.primary.main}` : '4px solid transparent',
+                  color: selected === rule ? theme.palette.primary.main : theme.palette.text.primary,
                   transition: 'background 0.2s, color 0.2s',
                 }}
               >
                 <div style={{ fontSize: 17 }}>{name}</div>
-                <div style={{ fontSize: 13, color: '#888' }}>Priority: {priority}</div>
+                <div style={{ fontSize: 13, color: theme.palette.text.secondary }}>Priority: {priority}</div>
               </div>
             );
-          }) : <div style={{ padding: 24, color: '#888' }}>No rules found.</div>}
+          }) : <div style={{ padding: 24, color: theme.palette.text.secondary }}>No rules found.</div>}
         </div>
       </div>
       {/* Right: Panel with details/tabs, fills all remaining space */}
@@ -322,7 +348,7 @@ const InspectorView = ({ rules, showSubgraph, initialSelected }) => {
             {tab === 0 && (
               <Box sx={{ flex: 1, minHeight: 0, minWidth: 0, p: 0, m: 0, width: '100%' }}>
                 {subNodes.length === 0 ? (
-                  <Box sx={{ color: '#888', p: 4, textAlign: 'center' }}>No dependents for this rule.</Box>
+                  <Box sx={{ color: theme.palette.text.secondary, p: 4, textAlign: 'center' }}>No dependents for this rule.</Box>
                 ) : (
                   <FlowChart
                     allNodes={subNodes}

@@ -12,6 +12,8 @@ import {
   Fade,
   Tooltip,
   useTheme,
+  Box,
+  Divider,
 } from '@mui/material';
 import {
   AccountTree as TreeIcon,
@@ -19,9 +21,12 @@ import {
   ChevronLeft as ChevronLeftIcon,
   BugReport as DebugIcon,
   SmartToy as AIIcon,
-  MergeType as MergeIcon
+  MergeType as MergeIcon,
+  LightMode as LightModeIcon,
+  DarkMode as DarkModeIcon,
 } from '@mui/icons-material';
 import HomeIcon from '@mui/icons-material/Home';
+import { useThemeContext } from '../context/ThemeContext';
 
 const miniDrawerWidth = 56;
 const drawerWidth = 240;
@@ -30,10 +35,15 @@ export default function Sidebar({ open, setOpen, variant = 'permanent' }) {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
+  const { darkTheme, setDarkTheme } = useThemeContext();
 
   const isSelected = (path) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.includes(path);
+  };
+
+  const handleThemeToggle = () => {
+    setDarkTheme(!darkTheme);
   };
 
   const menuItems = [
@@ -71,6 +81,8 @@ export default function Sidebar({ open, setOpen, variant = 'permanent' }) {
           }),
           top: '64px',
           height: 'calc(100% - 64px)',
+          display: 'flex',
+          flexDirection: 'column',
         },
       }}
     >
@@ -86,7 +98,9 @@ export default function Sidebar({ open, setOpen, variant = 'permanent' }) {
           {open ? <ChevronLeftIcon sx={{ color: theme.palette.text.primary }} /> : <MenuIcon sx={{ color: theme.palette.text.primary }} />}
         </IconButton>
       </Toolbar>
-      <List>
+      
+      {/* Navigation Menu Items */}
+      <List sx={{ flexGrow: 1 }}>
         {menuItems.map((item) => (
           <ListItem key={item.key} disablePadding sx={{ display: 'block' }}>
             <ListItemButton
@@ -137,6 +151,52 @@ export default function Sidebar({ open, setOpen, variant = 'permanent' }) {
           </ListItem>
         ))}
       </List>
+
+      {/* Theme Toggle at Bottom */}
+      <Box sx={{ p: 1 }}>
+        <Divider sx={{ mb: 1 }} />
+        <ListItem disablePadding sx={{ display: 'block' }}>
+          <ListItemButton
+            onClick={handleThemeToggle}
+            sx={{
+              minHeight: 48,
+              justifyContent: open ? 'initial' : 'center',
+              px: open ? 2.5 : 1,
+              '&:hover': {
+                bgcolor: theme.palette.action.hover,
+              },
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: 0,
+                mr: open ? 2 : 'auto',
+                justifyContent: 'center',
+                color: theme.palette.text.primary,
+              }}
+            >
+              <Tooltip title={!open ? (darkTheme ? 'Light Mode' : 'Dark Mode') : ''} placement="right">
+                <span>
+                  {darkTheme ? <LightModeIcon /> : <DarkModeIcon />}
+                </span>
+              </Tooltip>
+            </ListItemIcon>
+            <Fade in={open} timeout={400} unmountOnExit>
+              <ListItemText
+                primary={darkTheme ? 'Light Mode' : 'Dark Mode'}
+                sx={{
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  '& .MuiTypography-root': {
+                    color: theme.palette.text.primary,
+                  },
+                }}
+              />
+            </Fade>
+          </ListItemButton>
+        </ListItem>
+      </Box>
     </Drawer>
   );
 } 

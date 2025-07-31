@@ -5,59 +5,77 @@ import BugReportIcon from '@mui/icons-material/BugReport';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { DataSourceProvider } from '../context/DataSourceContext';
+import { ThemeProvider } from '../context/ThemeContext';
+import { AWSCredentialsProvider } from '../context/AWSCredentialsContext';
 
-const FeatureCard = ({ icon, title, description }) => (
-  <Box
-    sx={{
-      width: { xs: '100%', sm: '300px' },
-      height: '300px',
-      border: '1px solid #e0e0e0',
-      borderRadius: '16px',
-      boxShadow: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      p: 2,
-      m: 1,
-      textAlign: 'center',
-      transition: 'transform 0.3s',
-      '&:hover': {
-        transform: 'scale(1.02)',
-      },
-    }}
-  >
-    <Box sx={{ fontSize: 40, mb: 1 }}>{icon}</Box>
-    <Typography variant="h6" fontWeight="bold" gutterBottom>
-      {title}
-    </Typography>
-    <Typography variant="body2" color="text.secondary">
-      {description}
-    </Typography>
-  </Box>
-);
-
-const Section = ({ title, features, bgColor }) => (
-  <Box sx={{ backgroundColor: bgColor, py: 6, px: 2 }}>
-    <Typography variant="h4" align="center" fontWeight="bold" gutterBottom>
-      {title}
-    </Typography>
-    <Stack
-      direction={{ xs: 'column', md: 'row' }}
-      justifyContent="center"
-      alignItems="center"
-      flexWrap="wrap"
-      spacing={2}
+const FeatureCard = ({ icon, title, description }) => {
+  const theme = useTheme();
+  return (
+    <Box
+      sx={{
+        width: { xs: '100%', sm: '300px' },
+        height: '300px',
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: '16px',
+        boxShadow: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 2,
+        m: 1,
+        textAlign: 'center',
+        transition: 'transform 0.3s',
+        backgroundColor: theme.palette.background.paper,
+        '&:hover': {
+          transform: 'scale(1.02)',
+        },
+      }}
     >
-      {features.map((feature, index) => (
-        <FeatureCard key={index} {...feature} />
-      ))}
-    </Stack>
-  </Box>
-);
+      <Box sx={{ fontSize: 40, mb: 1 }}>{icon}</Box>
+      <Typography variant="h6" fontWeight="bold" gutterBottom>
+        {title}
+      </Typography>
+      <Typography variant="body2" color="text.secondary">
+        {description}
+      </Typography>
+    </Box>
+  );
+};
+
+const Section = ({ title, features, bgColor }) => {
+  const theme = useTheme();
+  return (
+    <Box sx={{ 
+      backgroundColor: bgColor === '#ffffff' ? theme.palette.background.default : 
+                   bgColor === '#f5f6fa' ? theme.palette.mode === 'dark' ? '#1a1a1a' : '#f5f6fa' : bgColor, 
+      py: 6, 
+      px: 2 
+    }}>
+      <Typography variant="h4" align="center" fontWeight="bold" gutterBottom>
+        {title}
+      </Typography>
+      <Stack
+        direction={{ xs: 'column', md: 'row' }}
+        justifyContent="center"
+        alignItems="center"
+        flexWrap="wrap"
+        spacing={2}
+      >
+        {features.map((feature, index) => (
+          <FeatureCard key={index} {...feature} />
+        ))}
+      </Stack>
+    </Box>
+  );
+};
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
 
   const features = [
     {
@@ -106,7 +124,7 @@ const HomePage = () => {
       {/* Header Section */}
       <Box
         sx={{
-          backgroundColor: '#f5f6fa',
+          backgroundColor: theme.palette.mode === 'dark' ? '#1a1a1a' : '#f5f6fa',
           py: 10,
           px: 2,
           textAlign: 'center',

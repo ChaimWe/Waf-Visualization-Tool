@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Box, Typography, Tabs, Tab, Stack, Chip, Divider, IconButton, CircularProgress } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useTheme } from '@mui/material/styles';
 
 // Helper functions (copied from RuleDetailsSidebar)
 function getRuleRelationships(rule, allRules) {
@@ -262,6 +263,7 @@ function useAISummary(rule, viewType) {
 }
 
 const RuleDetailsContent = ({ rule, rules, onClose, showJsonTab = true, showCloseButton = false, viewType, activeSection }) => {
+  const theme = useTheme();
   const [tab, setTab] = useState(0);
   const relationships = useMemo(() => rule && rules ? getRuleRelationships(rule, rules) : { dependencies: [], dependents: [] }, [rule, rules]);
   // Use AI summary hook
@@ -311,8 +313,49 @@ const RuleDetailsContent = ({ rule, rules, onClose, showJsonTab = true, showClos
       {detailsContent}
     </>
   );
+
+  const renderJsonContent = () => (
+    <Box sx={{ p: 2 }}>
+      <Typography variant="h6" gutterBottom>Statement</Typography>
+      <pre style={{ 
+        background: theme.palette.mode === 'dark' ? '#2d2d2d' : '#f5f5f5', 
+        padding: 12, 
+        borderRadius: 4, 
+        fontSize: 14, 
+        maxWidth: '100%', 
+        overflowX: 'auto',
+        color: theme.palette.text.primary
+      }}>{JSON.stringify(rule.Statement, null, 2)}</pre>
+      
+      {rule.VisibilityConfig && (
+        <>
+          <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>Visibility Config</Typography>
+          <pre style={{ 
+            background: theme.palette.mode === 'dark' ? '#2d2d2d' : '#f5f5f5', 
+            padding: 12, 
+            borderRadius: 4, 
+            fontSize: 14, 
+            maxWidth: '100%', 
+            overflowX: 'auto',
+            color: theme.palette.text.primary
+          }}>{JSON.stringify(rule.VisibilityConfig, null, 2)}</pre>
+        </>
+      )}
+    </Box>
+  );
+
   const renderJsonSection = () => (
-    <pre style={{ background: '#f5f5f5', padding: 16, borderRadius: 4, fontSize: 14, maxWidth: '100%', overflowX: 'auto' }}>{getJson(rule)}</pre>
+    <Box sx={{ p: 2 }}>
+      <pre style={{ 
+        background: theme.palette.mode === 'dark' ? '#2d2d2d' : '#f5f5f5', 
+        padding: 16, 
+        borderRadius: 4, 
+        fontSize: 14, 
+        maxWidth: '100%', 
+        overflowX: 'auto',
+        color: theme.palette.text.primary
+      }}>{getJson(rule)}</pre>
+    </Box>
   );
   const renderDependenciesSection = () => (
     <>
