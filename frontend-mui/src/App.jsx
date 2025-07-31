@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
 import Toolbar from '@mui/material/Toolbar';
+import { Alert, Button, Typography } from '@mui/material';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import HomePage from './pages/HomePage';
@@ -16,20 +17,43 @@ import { useDataSource } from './context/DataSourceContext';
 class GlobalErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
   }
   componentDidCatch(error, errorInfo) {
-    // Optionally log error to a service
+    console.error('Global error caught:', error, errorInfo);
+    this.setState({ errorInfo });
   }
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: 32, color: '#b71c1c', fontSize: 20 }}>
-          <b>Something went wrong:</b> {String(this.state.error)}
-        </div>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          minHeight: '100vh',
+          p: 4,
+          textAlign: 'center'
+        }}>
+          <Alert severity="error" sx={{ mb: 3, maxWidth: 600 }}>
+            <Typography variant="h6" gutterBottom>
+              Something went wrong
+            </Typography>
+            <Typography variant="body2" sx={{ mb: 2 }}>
+              {this.state.error?.message || 'An unexpected error occurred'}
+            </Typography>
+            <Button 
+              variant="contained" 
+              onClick={() => window.location.reload()}
+              sx={{ mt: 1 }}
+            >
+              Reload Application
+            </Button>
+          </Alert>
+        </Box>
       );
     }
     return this.props.children;

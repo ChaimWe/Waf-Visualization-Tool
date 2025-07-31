@@ -18,9 +18,7 @@ function detectDataType(data) {
 
 export default function WAFView() {
   const { awsMode, jsonData } = useDataSource();
-  // In a real app, you would get data from props or context
-  // For now, use jsonData for JSON mode, or fetch from backend for AWS mode
-  const data = jsonData; // This can be extended for AWS mode
+  const data = jsonData;
 
   const dataType = useMemo(() => detectDataType(data), [data]);
 

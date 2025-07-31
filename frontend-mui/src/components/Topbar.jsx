@@ -17,13 +17,19 @@ import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import UploadIcon from '@mui/icons-material/Upload';
 import { useDataSource } from '../context/DataSourceContext';
+import { useAWSCredentials } from '../context/AWSCredentialsContext';
 import Chip from '@mui/material/Chip';
-
+import AWSLoginDialog from './AWSLoginDialog';
 
 export default function Topbar({ title = 'WAF Visualization Tool', aclData, albData, setAclData, setAlbData, clearAclData, clearAlbData, onMenuClick }) {
   const theme = useTheme();
   const navigate = useNavigate();
   const { awsMode } = useDataSource();
+  const { isAuthenticated, logout } = useAWSCredentials();
+  
+  // AWS Login Dialog state
+  const [awsLoginOpen, setAwsLoginOpen] = React.useState(false);
+  
   // Upload menu
   const [uploadMenuAnchor, setUploadMenuAnchor] = React.useState(null);
   const uploadMenuOpen = Boolean(uploadMenuAnchor);
@@ -101,6 +107,19 @@ export default function Topbar({ title = 'WAF Visualization Tool', aclData, albD
     setConfirmOpen(false);
     setDeleteType(null);
   };
+  
+  // Profile button handlers
+  const handleProfileClick = () => {
+    if (isAuthenticated) {
+      // If authenticated, show logout option
+      logout();
+      showAlert('Disconnected from AWS', 'info');
+    } else {
+      // If not authenticated, open AWS login dialog
+      setAwsLoginOpen(true);
+    }
+  };
+
   // Count loaded files
   const loadedFiles = [aclData, albData].filter(Boolean).length;
   return (
@@ -307,9 +326,15 @@ export default function Topbar({ title = 'WAF Visualization Tool', aclData, albD
             sx={{ fontWeight: 500, fontSize: '0.95rem', px: 1, mr: 1 }}
           />
           {/* Profile photo */}
-          <Tooltip title="Profile">
-            <IconButton size="small">
-              <Avatar sx={{ width: 48, height: 48 }}>U</Avatar>
+          <Tooltip title={isAuthenticated ? "Disconnect AWS" : "Connect AWS"}>
+            <IconButton size="small" onClick={handleProfileClick}>
+              <Avatar sx={{ 
+                width: 48, 
+                height: 48,
+                bgcolor: isAuthenticated ? 'success.main' : 'grey.500'
+              }}>
+                {isAuthenticated ? 'A' : 'U'}
+              </Avatar>
             </IconButton>
           </Tooltip>
         </Box>
@@ -324,6 +349,12 @@ export default function Topbar({ title = 'WAF Visualization Tool', aclData, albD
           </Box>
         </Box>
       )}
+      
+      {/* AWS Login Dialog */}
+      <AWSLoginDialog 
+        open={awsLoginOpen} 
+        onClose={() => setAwsLoginOpen(false)} 
+      />
     </AppBar>
   );
 } 

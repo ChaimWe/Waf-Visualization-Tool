@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, Paper, useTheme, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
-import logo from '../assets/Lightmode-logo.png';
+import SecurityIcon from '@mui/icons-material/Security';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 export default function AboutPage() {
@@ -9,10 +9,10 @@ export default function AboutPage() {
   const theme = useTheme();
 
   const features = [
-    'Interactive Visualization: Dynamic graph-based interface showing relationships between WAF rules',
-    'Dependency Analysis: Easily identify rule dependencies and potential conflicts',
-    'Optimization Insights: Get recommendations for improving your WAF configuration',
-    'Real-time Updates: See changes and updates to your WAF rules in real-time',
+    'Interactive WAF/ALB Visualization: Dynamic graph-based interface showing relationships between AWS WAF and ALB rules',
+    'Rule Testing & Debugging: Test your WAF rules against real requests with our advanced debugger',
+    'AI-Powered Insights: Get intelligent recommendations and explanations about your WAF rules',
+    'Multi-Data Source Support: Connect to AWS live or upload JSON configurations for offline analysis',
   ];
 
   return (
@@ -29,9 +29,9 @@ export default function AboutPage() {
       }}
     >
       <Box sx={{ mt: 4, mb: 2, textAlign: 'center' }}>
-        <img src={logo} alt="AppsFlyer Logo" style={{ height: 90, marginBottom: 16 }} />
+        <SecurityIcon sx={{ fontSize: 90, color: theme.palette.primary.main, mb: 2 }} />
         <Typography variant="h3" sx={{ fontWeight: 700, mb: 2, color: theme.palette.primary.main }}>
-          About AWS WAF Visualization Tool
+          About WAF Visualization Tool
         </Typography>
       </Box>
       <Box sx={{ maxWidth: 800, width: '100%' }}>
@@ -40,7 +40,7 @@ export default function AboutPage() {
             Purpose
           </Typography>
           <Typography variant="body1" sx={{ mb: 2 }}>
-            Our AWS WAF Visualization Tool is designed to simplify the complex task of managing AWS Web Application Firewall (WAF) rules. By providing intuitive visual representations of rule relationships and dependencies, we help security teams better understand and optimize their WAF configurations.
+            Our WAF Visualization Tool is designed to simplify the complex task of managing AWS Web Application Firewall (WAF) and Application Load Balancer (ALB) rules. By providing intuitive visual representations of rule relationships and dependencies, we help security teams better understand, debug, and optimize their AWS security configurations.
           </Typography>
         </Paper>
         <Paper elevation={3} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 4, mb: 4 }}>
@@ -63,7 +63,7 @@ export default function AboutPage() {
             How It Works
           </Typography>
           <Typography variant="body1">
-            The tool connects to your AWS WAF configuration and creates an interactive visual representation of your rules and their relationships. You can explore dependencies, analyze rule patterns, and identify potential optimizations through our intuitive interface.
+            The tool connects to your AWS WAF and ALB configurations through secure API calls or accepts uploaded JSON files. It creates interactive visual representations of your rules and their relationships, allowing you to explore dependencies, analyze rule patterns, test requests, and get AI-powered insights for optimization.
           </Typography>
         </Paper>
         <Box sx={{ textAlign: 'center', mt: 4 }}>

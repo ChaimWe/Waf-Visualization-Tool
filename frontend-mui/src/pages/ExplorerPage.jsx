@@ -118,12 +118,7 @@ export default function ExplorerPage() {
       const albRules = filteredRules.filter(r => (albData?.Rules || []).includes(r));
       const transformer = new WafInterlinkedTransformer(aclRules, albRules);
       const result = transformer.transformRules() || { nodes: [], edges: [] };
-      // Debug logging
-      console.log('[COMBINED-WAF] ACL Rules:', aclRules);
-      console.log('[COMBINED-WAF] ALB Rules:', albRules);
-      console.log('[COMBINED-WAF] Interlinked nodes:', result.nodes);
-      console.log('[COMBINED-WAF] Interlinked edges:', result.edges);
-      return result;
+     return result;
     }
     if (!filteredRules.length) return { nodes: [], edges: [] };
     if (ruleSet === 'acl') {

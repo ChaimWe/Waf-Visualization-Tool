@@ -22,11 +22,10 @@ import CloudIcon from '@mui/icons-material/Cloud';
 import SecurityIcon from '@mui/icons-material/Security';
 
 export default function AWSLoginDialog({ open, onClose }) {
-  const { login, isLoading, error, regions, isAuthenticated, credentials, logout } = useAWSCredentials();
+  const { login, isLoading, error, regions, isAuthenticated, logout } = useAWSCredentials();
   const [accessKeyId, setAccessKeyId] = useState('');
   const [secretAccessKey, setSecretAccessKey] = useState('');
   const [region, setRegion] = useState('us-east-1');
-  const [showSecret, setShowSecret] = useState(false);
 
   const handleLogin = async () => {
     if (!accessKeyId || !secretAccessKey || !region) {
@@ -36,6 +35,10 @@ export default function AWSLoginDialog({ open, onClose }) {
     const result = await login(accessKeyId, secretAccessKey, region);
     if (result.success) {
       onClose();
+      // Clear sensitive data
+      setAccessKeyId('');
+      setSecretAccessKey('');
+      setRegion('us-east-1');
     }
   };
 
@@ -62,29 +65,28 @@ export default function AWSLoginDialog({ open, onClose }) {
       </DialogTitle>
       
       <DialogContent>
-        {isAuthenticated && credentials ? (
+        {isAuthenticated ? (
           <Box>
             <Alert severity="success" sx={{ mb: 2 }}>
               <Typography variant="h6">Connected to AWS</Typography>
               <Typography variant="body2">
-                Account: {credentials.accountId} | Region: {credentials.region}
+                Your AWS credentials are securely stored in the session and will be used for all AWS operations.
               </Typography>
             </Alert>
             
             <Stack spacing={2}>
               <Box>
-                <Typography variant="subtitle2" gutterBottom>Account Information:</Typography>
+                <Typography variant="subtitle2" gutterBottom>Session Status:</Typography>
                 <Stack direction="row" spacing={1} flexWrap="wrap">
-                  <Chip label={`Account: ${credentials.accountId}`} size="small" />
-                  <Chip label={`Region: ${credentials.region}`} size="small" />
-                  <Chip label={`User: ${credentials.userId}`} size="small" />
+                  <Chip label="Authenticated" color="success" size="small" />
+                  <Chip label="Session Active" color="primary" size="small" />
                 </Stack>
               </Box>
               
               <Box>
-                <Typography variant="subtitle2" gutterBottom>ARN:</Typography>
-                <Typography variant="body2" sx={{ wordBreak: 'break-all', fontFamily: 'monospace' }}>
-                  {credentials.arn}
+                <Typography variant="subtitle2" gutterBottom>Security Note:</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Your credentials are stored securely in the server session and are never exposed to the frontend.
                 </Typography>
               </Box>
             </Stack>
@@ -93,8 +95,8 @@ export default function AWSLoginDialog({ open, onClose }) {
           <Stack spacing={3}>
             <Alert severity="info">
               <Typography variant="body2">
-                Enter your AWS credentials to test against live WAF instances. 
-                Credentials are stored locally and never sent to our servers.
+                Enter your AWS credentials to access your WAF and ALB configurations. 
+                Credentials are stored securely in the server session and never exposed to the frontend.
               </Typography>
             </Alert>
 
@@ -116,7 +118,7 @@ export default function AWSLoginDialog({ open, onClose }) {
 
             <TextField
               label="Secret Access Key"
-              type={showSecret ? 'text' : 'password'}
+              type="password"
               value={secretAccessKey}
               onChange={(e) => setSecretAccessKey(e.target.value)}
               fullWidth
@@ -143,7 +145,7 @@ export default function AWSLoginDialog({ open, onClose }) {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <SecurityIcon color="action" fontSize="small" />
               <Typography variant="caption" color="text.secondary">
-                Your credentials are validated against AWS STS and stored locally
+                Your credentials will be validated against AWS and stored securely in the server session
               </Typography>
             </Box>
           </Stack>

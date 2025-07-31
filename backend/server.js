@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import session from "express-session";
 
 import {
   WAFV2Client,
@@ -15,10 +16,144 @@ const { ELBv2Client, DescribeLoadBalancersCommand } = elbv2Pkg;
 
 dotenv.config();
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true
+}));
+app.use(express.json({ limit: '10mb' }));
 
+// Session management
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
 
-app.get("/api/waf-acls-names/region/:region", async (req, res) => {
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+  });
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Authentication endpoints
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { accessKeyId, secretAccessKey, region } = req.body;
+    
+    if (!accessKeyId || !secretAccessKey || !region) {
+      return res.status(400).json({ 
+        error: 'Missing credentials',
+        message: 'Access key, secret key, and region are required'
+      });
+    }
+
+    // Test AWS credentials by making a simple API call
+    const testClient = new WAFV2Client({
+      accessKeyId,
+      secretAccessKey,
+      region
+    });
+
+    try {
+      // Test the credentials with a simple API call
+      const testCommand = new ListWebACLsCommand({ Scope: 'REGIONAL' });
+      await testClient.send(testCommand);
+      
+      // Store credentials in session
+      req.session.awsCredentials = { accessKeyId, secretAccessKey, region };
+      req.session.authenticated = true;
+      
+      res.json({ 
+        success: true, 
+        message: 'Successfully authenticated with AWS'
+      });
+    } catch (awsError) {
+      console.error('AWS authentication failed:', awsError);
+      res.status(401).json({ 
+        error: 'Invalid AWS credentials',
+        message: 'The provided AWS credentials are invalid or insufficient'
+      });
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ 
+      error: 'Login failed',
+      message: 'An error occurred during authentication'
+    });
+  }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ 
+        error: 'Logout failed',
+        message: 'Failed to destroy session'
+      });
+    }
+    res.json({ success: true, message: 'Successfully logged out' });
+  });
+});
+
+app.get('/api/auth/status', (req, res) => {
+  res.json({ 
+    authenticated: req.session.authenticated || false,
+    hasCredentials: !!req.session.awsCredentials
+  });
+});
+
+// Middleware to check authentication
+const requireAuth = (req, res, next) => {
+  if (!req.session.authenticated || !req.session.awsCredentials) {
+    return res.status(401).json({ 
+      error: 'Authentication required',
+      message: 'Please log in with your AWS credentials'
+    });
+  }
+  next();
+};
+
+// Helper to get AWS client with user credentials
+const getUserWAFClient = (region, req) => {
+  const credentials = req.session.awsCredentials;
+  if (!credentials) {
+    throw new Error('No AWS credentials found in session');
+  }
+  
+  return new WAFV2Client({
+    accessKeyId: credentials.accessKeyId,
+    secretAccessKey: credentials.secretAccessKey,
+    region: region
+  });
+};
+
+const getUserELBClient = (region, req) => {
+  const credentials = req.session.awsCredentials;
+  if (!credentials) {
+    throw new Error('No AWS credentials found in session');
+  }
+  
+  return new ELBv2Client({
+    accessKeyId: credentials.accessKeyId,
+    secretAccessKey: credentials.secretAccessKey,
+    region: region
+  });
+};
+
+app.get("/api/waf-acls-names/region/:region", requireAuth, async (req, res) => {
   try {
     const regionParam = req.params.region;
     console.log(`Fetching WAF ACLs for region: ${regionParam}`);
@@ -28,10 +163,10 @@ app.get("/api/waf-acls-names/region/:region", async (req, res) => {
       : "REGIONAL";
 
     const clientConfig = scope === "CLOUDFRONT"
-      ? { region: process.env.AWS_REGION || "us-east-1" }
+      ? { region: req.session.awsCredentials.region }
       : { region: regionParam };
 
-    const wafClientForRegion = new WAFV2Client(clientConfig);
+    const wafClientForRegion = getUserWAFClient(clientConfig.region, req);
 
     const command = new ListWebACLsCommand({ Scope: scope });
     const response = await wafClientForRegion.send(command);
@@ -42,12 +177,14 @@ app.get("/api/waf-acls-names/region/:region", async (req, res) => {
     res.json(aclNames);
   } catch (error) {
     console.error("Error fetching WAF ACLs for region:", error);
-    res.status(500).json({ error: "Error fetching WAF ACLs" });
+    res.status(500).json({ 
+      error: "Error fetching WAF ACLs",
+      message: error.message || 'Failed to fetch WAF ACLs'
+    });
   }
 });
 
-
-app.get("/api/waf-acl-details/region/:region/name/:name", async (req, res) => {
+app.get("/api/waf-acl-details/region/:region/name/:name", requireAuth, async (req, res) => {
   try {
     const { region, name } = req.params;
     console.log(`🚀 Fetching ACL details for region: ${region}, name: ${name}`);
@@ -59,9 +196,9 @@ app.get("/api/waf-acl-details/region/:region/name/:name", async (req, res) => {
 
     const clientConfig =
       scope === "CLOUDFRONT"
-        ? { region: process.env.AWS_REGION || "us-east-1" } 
+        ? { region: req.session.awsCredentials.region } 
         : { region };
-    const wafClientForRegion = new WAFV2Client(clientConfig);
+    const wafClientForRegion = getUserWAFClient(clientConfig.region, req);
 
     const listCommand = new ListWebACLsCommand({ Scope: scope });
     const listResponse = await wafClientForRegion.send(listCommand);
@@ -69,7 +206,10 @@ app.get("/api/waf-acl-details/region/:region/name/:name", async (req, res) => {
 
     const acl = acls.find(item => item.Name === name);
     if (!acl) {
-      return res.status(404).json({ error: `ACL with name ${name} not found in region ${region}` });
+      return res.status(404).json({ 
+        error: `ACL with name ${name} not found in region ${region}`,
+        message: 'The specified WAF ACL could not be found'
+      });
     }
 
     const getCommand = new GetWebACLCommand({
@@ -80,7 +220,10 @@ app.get("/api/waf-acl-details/region/:region/name/:name", async (req, res) => {
     const aclDetailsResponse = await wafClientForRegion.send(getCommand);
     let details = aclDetailsResponse.WebACL;
     if (!details) {
-      return res.status(404).json({ error: `ACL details for ${name} not found` });
+      return res.status(404).json({ 
+        error: `ACL details for ${name} not found`,
+        message: 'Failed to retrieve ACL details'
+      });
     }
 
     if (details.Rules) {
@@ -96,6 +239,7 @@ app.get("/api/waf-acl-details/region/:region/name/:name", async (req, res) => {
             rule.RuleGroup = rgResponse.RuleGroup;
           } catch (error) {
             console.error(`❌ Error fetching rule group for ARN ${rgArn}:`, error);
+            // Continue without the rule group rather than failing completely
           }
         }
         return rule;
@@ -105,7 +249,10 @@ app.get("/api/waf-acl-details/region/:region/name/:name", async (req, res) => {
     res.json(details);
   } catch (error) {
     console.error("❌ Error in /api/waf-acl-details:", error);
-    res.status(500).json({ error: "Error fetching ACL details" });
+    res.status(500).json({ 
+      error: "Error fetching ACL details",
+      message: error.message || 'Failed to fetch ACL details'
+    });
   }
 });
 
@@ -123,34 +270,42 @@ const mockAcls = [
 ];
 
 // Helper to fetch ALB from AWS
-async function fetchAlbFromAws(albId) {
-  const client = new ELBv2Client({ region: process.env.AWS_REGION });
-  const command = new DescribeLoadBalancersCommand({ LoadBalancerArns: [albId] });
-  const response = await client.send(command);
-  if (response.LoadBalancers && response.LoadBalancers.length > 0) {
-    const alb = response.LoadBalancers[0];
-    return {
-      id: alb.LoadBalancerArn,
-      name: alb.LoadBalancerName,
-      region: process.env.AWS_REGION,
-      dnsName: alb.DNSName,
-      type: alb.Type,
-      scheme: alb.Scheme,
-      state: alb.State?.Code,
-      vpcId: alb.VpcId,
-      // attachedAcls: [] // You can add logic to fetch attached ACLs if needed
-    };
+async function fetchAlbFromAws(albId, req) {
+  try {
+    const client = getUserELBClient(req.session.awsCredentials.region, req);
+    const command = new DescribeLoadBalancersCommand({ LoadBalancerArns: [albId] });
+    const response = await client.send(command);
+    if (response.LoadBalancers && response.LoadBalancers.length > 0) {
+      const alb = response.LoadBalancers[0];
+      return {
+        id: alb.LoadBalancerArn,
+        name: alb.LoadBalancerName,
+        region: req.session.awsCredentials.region,
+        dnsName: alb.DNSName,
+        type: alb.Type,
+        scheme: alb.Scheme,
+        state: alb.State?.Code,
+        vpcId: alb.VpcId,
+        // attachedAcls: [] // You can add logic to fetch attached ACLs if needed
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching ALB from AWS:', error);
+    throw error;
   }
-  return null;
 }
 
 // Endpoint for ALB details (real AWS)
-app.get('/api/alb/:albId', async (req, res) => {
+app.get('/api/alb/:albId', requireAuth, async (req, res) => {
   const { albId } = req.params;
   try {
-    const alb = await fetchAlbFromAws(albId);
+    const alb = await fetchAlbFromAws(albId, req);
     if (!alb) {
-      return res.status(404).json({ error: `ALB with id ${albId} not found in AWS` });
+      return res.status(404).json({ 
+        error: `ALB with id ${albId} not found in AWS`,
+        message: 'The specified ALB could not be found'
+      });
     }
     res.json(alb);
   } catch (err) {
@@ -160,18 +315,24 @@ app.get('/api/alb/:albId', async (req, res) => {
     if (alb) {
       return res.json(alb);
     }
-    res.status(500).json({ error: 'Error fetching ALB from AWS and no mock data available.' });
+    res.status(500).json({ 
+      error: 'Error fetching ALB from AWS and no mock data available.',
+      message: 'Failed to fetch ALB details'
+    });
   }
 });
 
 // Endpoint for ALB+ACL details (real AWS for ALB, mock for ACL)
-app.get('/api/alb-acl/:albId/:aclId', async (req, res) => {
+app.get('/api/alb-acl/:albId/:aclId', requireAuth, async (req, res) => {
   const { albId, aclId } = req.params;
   try {
-    const alb = await fetchAlbFromAws(albId);
+    const alb = await fetchAlbFromAws(albId, req);
     const acl = mockAcls.find(a => a.id === aclId); // Replace with real ACL fetch if needed
     if (!alb || !acl) {
-      return res.status(404).json({ error: `ALB or ACL not found` });
+      return res.status(404).json({ 
+        error: `ALB or ACL not found`,
+        message: 'The specified ALB or ACL could not be found'
+      });
     }
     res.json({ alb, acl });
   } catch (err) {
@@ -182,14 +343,33 @@ app.get('/api/alb-acl/:albId/:aclId', async (req, res) => {
     if (fallbackAlb && fallbackAcl) {
       return res.json({ alb: fallbackAlb, acl: fallbackAcl });
     }
-    res.status(500).json({ error: 'Error fetching ALB+ACL from AWS and no mock data available.' });
+    res.status(500).json({ 
+      error: 'Error fetching ALB+ACL from AWS and no mock data available.',
+      message: 'Failed to fetch ALB and ACL details'
+    });
   }
 });
 
-// Endpoint to check if AWS credentials are present
+// Endpoint to check if AWS credentials are present (now checks session)
 app.get('/api/aws-credentials-status', (req, res) => {
-  const hasCredentials = Boolean(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && process.env.AWS_REGION);
-  res.json({ hasCredentials });
+  try {
+    const hasCredentials = req.session.authenticated && !!req.session.awsCredentials;
+    res.json({ hasCredentials });
+  } catch (error) {
+    console.error('Error checking AWS credentials:', error);
+    res.status(500).json({ 
+      error: 'Error checking AWS credentials',
+      message: 'Failed to verify AWS credentials'
+    });
+  }
+});
+
+// 404 handler for undefined routes
+app.use('*', (req, res) => {
+  res.status(404).json({ 
+    error: 'Route not found',
+    message: `The requested route ${req.originalUrl} does not exist`
+  });
 });
 
 const PORT = process.env.PORT || 5000;

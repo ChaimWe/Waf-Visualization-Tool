@@ -12,94 +12,95 @@ export function AWSCredentialsProvider({ children }) {
     'eu-west-1', 'eu-central-1', 'ap-southeast-1', 'ap-northeast-1'
   ]);
 
-  // Load credentials from localStorage on mount
+  // Check authentication status on mount
   useEffect(() => {
-    const savedCredentials = localStorage.getItem('aws-credentials');
-    if (savedCredentials) {
-      try {
-        const parsed = JSON.parse(savedCredentials);
-        setCredentials(parsed);
-        setIsAuthenticated(true);
-      } catch (err) {
-        localStorage.removeItem('aws-credentials');
-      }
-    }
+    checkAuthStatus();
   }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const response = await fetch('/api/auth/status', {
+        credentials: 'include'
+      });
+      const data = await response.json();
+      
+      if (data.authenticated && data.hasCredentials) {
+        setIsAuthenticated(true);
+        // We don't store the actual credentials in frontend for security
+        setCredentials({ authenticated: true });
+      } else {
+        setIsAuthenticated(false);
+        setCredentials(null);
+      }
+    } catch (err) {
+      console.error('Error checking auth status:', err);
+      setIsAuthenticated(false);
+      setCredentials(null);
+    }
+  };
 
   const login = async (accessKeyId, secretAccessKey, region) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Validate credentials by making a test call to STS
-      const { STSClient, GetCallerIdentityCommand } = await import('@aws-sdk/client-sts');
-      
-      const stsClient = new STSClient({
-        region: region,
-        credentials: {
-          accessKeyId: accessKeyId,
-          secretAccessKey: secretAccessKey
-        }
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          accessKeyId,
+          secretAccessKey,
+          region
+        })
       });
 
-      const command = new GetCallerIdentityCommand({});
-      const response = await stsClient.send(command);
+      const data = await response.json();
 
-      const newCredentials = {
-        accessKeyId,
-        secretAccessKey,
-        region,
-        accountId: response.Account,
-        userId: response.UserId,
-        arn: response.Arn
-      };
-
-      // Save to localStorage
-      localStorage.setItem('aws-credentials', JSON.stringify(newCredentials));
-      
-      setCredentials(newCredentials);
-      setIsAuthenticated(true);
-      setIsLoading(false);
-
-      return { success: true, accountId: response.Account };
+      if (response.ok) {
+        setIsAuthenticated(true);
+        setCredentials({ authenticated: true, region });
+        setIsLoading(false);
+        return { success: true };
+      } else {
+        setError(data.message || 'Login failed');
+        setIsLoading(false);
+        return { success: false, error: data.message };
+      }
     } catch (err) {
-      setError(err.message);
+      setError('Network error. Please try again.');
       setIsLoading(false);
       return { success: false, error: err.message };
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('aws-credentials');
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+    
     setCredentials(null);
     setIsAuthenticated(false);
     setError(null);
   };
 
   const getWAFClient = () => {
-    if (!credentials) return null;
-    
-    const { WAFV2Client } = require('@aws-sdk/client-wafv2');
-    return new WAFV2Client({
-      region: credentials.region,
-      credentials: {
-        accessKeyId: credentials.accessKeyId,
-        secretAccessKey: credentials.secretAccessKey
-      }
-    });
+    // This is now handled by the backend with session credentials
+    // Frontend doesn't need to create AWS clients directly
+    return null;
   };
 
   const getSTSClient = () => {
-    if (!credentials) return null;
-    
-    const { STSClient } = require('@aws-sdk/client-sts');
-    return new STSClient({
-      region: credentials.region,
-      credentials: {
-        accessKeyId: credentials.accessKeyId,
-        secretAccessKey: credentials.secretAccessKey
-      }
-    });
+    // This is now handled by the backend with session credentials
+    // Frontend doesn't need to create AWS clients directly
+    return null;
   };
 
   return (
@@ -112,7 +113,8 @@ export function AWSCredentialsProvider({ children }) {
       login,
       logout,
       getWAFClient,
-      getSTSClient
+      getSTSClient,
+      checkAuthStatus
     }}>
       {children}
     </AWSCredentialsContext.Provider>
